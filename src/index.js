@@ -31,10 +31,16 @@ Iface.prototype.getSubNet = (address, mask) => {
 };
 
 Iface.prototype.getMacAddress = iface =>
-  child.execFileSync("cat", [`/sys/class/net/${iface}/address`]).toString();
+  child
+    .execFileSync("cat", [`/sys/class/net/${iface}/address`])
+    .toString()
+    .trim();
 
 const getMacAddress = iface =>
-  child.execFileSync("cat", [`/sys/class/net/${iface}/address`]).toString();
+  child
+    .execFileSync("cat", [`/sys/class/net/${iface}/address`])
+    .toString()
+    .trim();
 
 module.exports = {
   getMacAddress,
