@@ -8,9 +8,9 @@ function Iface(iface, apConfig, clientConfig) {
   this.apConfig = apConfig || {
     address: "192.168.254.0",
     dhcp: false,
-    mac: getMacAddress(this.iface),
+    mac: this.getMacAddress(),
     mask: "255.255.255.0",
-    subnet: getSubNet(this.apConfig.address, this.apConfig.mask)
+    subnet: this.getSubNet()
   };
   this.clientConfig = clientConfig || {
     dhcp: true,
