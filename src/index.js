@@ -8,7 +8,7 @@ function Iface(iface, apConfig, clientConfig) {
   this.apConfig = apConfig || {
     address: "192.168.254.0",
     dhcp: false,
-    mac: this.getMacAddress(),
+    mac: this.getMacAddress(this.iface),
     mask: "255.255.255.0",
     subnet: this.getSubNet()
   };
@@ -26,8 +26,8 @@ Iface.prototype.getSubNet = () => {
   return new Error("Unable to find Subnet information");
 };
 
-Iface.prototype.getMacAddress = () =>
-  child.execFileSync("cat", [`/sys/class/net/${this.iface}/address`]);
+Iface.prototype.getMacAddress = iface =>
+  child.execFileSync("cat", [`/sys/class/net/${iface}/address`]);
 
 const getMacAddress = iface =>
   child.execFileSync("cat", [`/sys/class/net/${iface}/address`]);
