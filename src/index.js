@@ -8,10 +8,9 @@ const Iface = (iface, apConfig, clientConfig) => {
   this.apConfig = apConfig || {
     address: "192.168.254.0",
     dhcp: false,
-    cidr: "192.168.254.0/24",
-    mac: this.getMacAddress(),
+    mac: getMacAddress(this.iface),
     mask: "255.255.255.0",
-    subnet: this.getSubNet()
+    subnet: getSubNet(this.apConfig.address, this.apConfig.mask)
   };
   this.clientConfig = clientConfig || {
     dhcp: true,
@@ -22,17 +21,14 @@ const Iface = (iface, apConfig, clientConfig) => {
   console.dir(this.config, { depth: null, colors: true });
 };
 
-Iface.prototype.getMacAddress = () =>
-  child.execFileSync("cat"[`/sys/class/net/${this.iface}/address`]);
-
-Iface.prototype.getSubNet = () => {
-  if (this.apConfig.cidr) return ip.cidrSubnet(this.apConfig.cidr);
-  if (this.apConfig.address && this.apConfig.mask)
+const getSubNet = (address, mask) => {
+  if (address && mask)
     return ip.subnet(this.apConfig.address, this.apConfig.mask);
+  return new Error("Unable to find Subnet information");
 };
 
-const getMacAddress = () =>
-  child.execFileSync("cat"[`/sys/class/net/${this.iface}/address`]);
+const getMacAddress = iface =>
+  child.execFileSync("cat"[`/sys/class/net/${iface}/address`]);
 
 module.exports = {
   getMacAddress,
