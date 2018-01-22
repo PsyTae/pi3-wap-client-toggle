@@ -7,13 +7,13 @@ function Iface(iface, apConfig, clientConfig) {
   this.iface = iface ? iface.toLowerCase() : "wlan0";
   this.apConfig = apConfig || {
     address: "192.168.254.0",
-    mask: "255.255.255.0"
+    subnetMask: "255.255.255.0"
   };
   this.apConfig.dhcp = false;
   this.apConfig.mac = this.getMacAddress(this.iface);
   this.apConfig.subnet = this.getSubNet(
     this.apConfig.address,
-    this.apConfig.mask
+    this.apConfig.subnetMask
   );
   this.clientConfig = clientConfig || {
     ssid: null,
