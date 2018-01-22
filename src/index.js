@@ -18,7 +18,8 @@ function Iface(iface, apConfig, clientConfig) {
     password: null
   };
   console.log("IFACE:", this.iface);
-  console.dir(this.config, { depth: null, colors: true });
+  console.dir(this.apConfig, { depth: null, colors: true });
+  console.dir(this.clientConfig, { depth: null, colors: true });
 }
 
 Iface.prototype.getSubNet = (address, mask) => {
