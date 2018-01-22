@@ -10,7 +10,7 @@ function Iface(iface, apConfig, clientConfig) {
     dhcp: false,
     mac: this.getMacAddress(this.iface),
     mask: "255.255.255.0",
-    subnet: this.getSubNet()
+    subnet: this.getSubNet(this.apConfig.address, this.apConfig.mask)
   };
   this.clientConfig = clientConfig || {
     dhcp: true,
@@ -28,10 +28,10 @@ Iface.prototype.getSubNet = (address, mask) => {
 };
 
 Iface.prototype.getMacAddress = iface =>
-  child.execFileSync("cat", [`/sys/class/net/${iface}/address`]);
+  child.execFileSync("cat", [`/sys/class/net/${iface}/address`]).toString();
 
 const getMacAddress = iface =>
-  child.execFileSync("cat", [`/sys/class/net/${iface}/address`]);
+  child.execFileSync("cat", [`/sys/class/net/${iface}/address`]).toString();
 
 module.exports = {
   getMacAddress,
