@@ -4,7 +4,7 @@ const wlan1 = new Iface(
   "WLAN1",
   {
     address: "192.168.254.0",
-    mask: "255.255.0.0"
+    subnetMask: "255.255.0.0"
   },
   { ssid: "dai", password: "HQWireless!" }
 );
