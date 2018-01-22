@@ -7,19 +7,19 @@ function Iface(iface, apConfig, clientConfig) {
   this.iface = iface ? iface.toLowerCase() : "wlan0";
   this.apConfig = apConfig || {
     address: "192.168.254.0",
-    dhcp: false,
     mask: "255.255.255.0"
   };
+  this.apConfig.dhcp = false;
   this.apConfig.mac = this.getMacAddress(this.iface);
   this.apConfig.subnet = this.getSubNet(
     this.apConfig.address,
     this.apConfig.mask
   );
   this.clientConfig = clientConfig || {
-    dhcp: true,
     ssid: null,
     password: null
   };
+  this.clientConfig.dhcp = true;
   console.log("IFACE:", this.iface);
   console.dir(this.apConfig, { depth: null, colors: true });
   console.dir(this.clientConfig, { depth: null, colors: true });
