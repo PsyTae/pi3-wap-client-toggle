@@ -8,4 +8,7 @@ const wlan1 = new Iface(
   },
   { ssid: "dai", password: "HQWireless!" }
 );
+
+console.log(wlan1);
 const wlan0 = new Iface("WLAN0");
+console.log(wlan0);
