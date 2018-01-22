@@ -3,7 +3,7 @@
 const child = require("child_process");
 const ip = require("ip");
 
-const Iface = (iface, apConfig, clientConfig) => {
+function Iface(iface, apConfig, clientConfig) {
   this.iface = iface ? iface.toLowerCase() : "wlan0";
   this.apConfig = apConfig || {
     address: "192.168.254.0",
@@ -19,13 +19,15 @@ const Iface = (iface, apConfig, clientConfig) => {
   };
   console.log("IFACE:", this.iface);
   console.dir(this.config, { depth: null, colors: true });
-};
-
-const getSubNet = (address, mask) => {
-  if (address && mask)
+}
+Iface.prototype.getSubNet = () => {
+  if (this.apConfig.address && this.apConfig.mask)
     return ip.subnet(this.apConfig.address, this.apConfig.mask);
   return new Error("Unable to find Subnet information");
 };
+
+Iface.prototype.getMacAddress = () =>
+  child.execFileSync("cat"[`/sys/class/net/${this.iface}/address`]);
 
 const getMacAddress = iface =>
   child.execFileSync("cat"[`/sys/class/net/${iface}/address`]);
