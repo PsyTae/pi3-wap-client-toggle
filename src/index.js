@@ -20,9 +20,6 @@ function Iface(iface, apConfig, clientConfig) {
     password: null
   };
   this.clientConfig.dhcp = true;
-  console.log("IFACE:", this.iface);
-  console.dir(this.apConfig, { depth: null, colors: true });
-  console.dir(this.clientConfig, { depth: null, colors: true });
 }
 
 Iface.prototype.getSubNet = (address, mask) => {
