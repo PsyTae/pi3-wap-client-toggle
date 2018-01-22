@@ -8,10 +8,13 @@ function Iface(iface, apConfig, clientConfig) {
   this.apConfig = apConfig || {
     address: "192.168.254.0",
     dhcp: false,
-    mac: this.getMacAddress(this.iface),
-    mask: "255.255.255.0",
-    subnet: this.getSubNet(this.apConfig.address, this.apConfig.mask)
+    mask: "255.255.255.0"
   };
+  this.apConfig.mac = this.getMacAddress(this.iface);
+  this.apConfig.subnet = this.getSubNet(
+    this.apConfig.address,
+    this.apConfig.mask
+  );
   this.clientConfig = clientConfig || {
     dhcp: true,
     ssid: null,
