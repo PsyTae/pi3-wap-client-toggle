@@ -20,9 +20,9 @@ function Iface(iface, apConfig, clientConfig) {
   console.log("IFACE:", this.iface);
   console.dir(this.config, { depth: null, colors: true });
 }
-Iface.prototype.getSubNet = () => {
-  if (this.apConfig.address && this.apConfig.mask)
-    return ip.subnet(this.apConfig.address, this.apConfig.mask);
+
+Iface.prototype.getSubNet = (address, mask) => {
+  if (address && mask) return ip.subnet(address, mask);
   return new Error("Unable to find Subnet information");
 };
 
