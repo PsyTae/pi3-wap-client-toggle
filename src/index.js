@@ -27,10 +27,10 @@ Iface.prototype.getSubNet = () => {
 };
 
 Iface.prototype.getMacAddress = () =>
-  child.execFileSync("cat"[`/sys/class/net/${this.iface}/address`]);
+  child.execFileSync("cat", [`/sys/class/net/${this.iface}/address`]);
 
 const getMacAddress = iface =>
-  child.execFileSync("cat"[`/sys/class/net/${iface}/address`]);
+  child.execFileSync("cat", [`/sys/class/net/${iface}/address`]);
 
 module.exports = {
   getMacAddress,
