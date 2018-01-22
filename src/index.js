@@ -36,13 +36,4 @@ Iface.prototype.getMacAddress = iface =>
     .toString()
     .trim();
 
-const getMacAddress = iface =>
-  child
-    .execFileSync("cat", [`/sys/class/net/${iface}/address`])
-    .toString()
-    .trim();
-
-module.exports = {
-  getMacAddress,
-  Iface
-};
+module.exports = Iface;
