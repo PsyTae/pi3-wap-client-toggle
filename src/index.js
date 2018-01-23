@@ -6,7 +6,7 @@ const os = require("os");
 /**
  * @typedef {Object} clientConfig
  * @property {string} ssid - SSID to look for and connect to
- * @property {string} password - password for WIFI Connection
+ * @property {string} pass - password for WIFI Connection
  */
 
 /**
@@ -44,7 +44,7 @@ function Iface(iface, clientConfig, apConfig) {
 
     this.clientConfig = clientConfig || {
       ssid: null,
-      password: null
+      pass: null
     };
     this.clientConfig.dhcp = true;
   } else return new Iface(iface, clientConfig, apConfig);
