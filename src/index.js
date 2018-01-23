@@ -17,12 +17,8 @@ function Iface(iface, apConfig, clientConfig) {
     this.apConfig.subnetMask
   );
 
-  this.apConfig.dhcpFirst =
-    ip.toBuffer(this.apConfig.subnet.networkAddress) + 11;
-  this.apConfig.dhcpLast =
-    ip.toBuffer(this.apConfig.subnet.networkAddress) +
-    11 +
-    this.apConfig.dhcpPoolSize;
+  this.apConfig.dhcpFirst = ip.toBuffer(this.apConfig.subnet.networkAddress);
+  this.apConfig.dhcpLast = ip.toBuffer(this.apConfig.subnet.networkAddress);
 
   this.clientConfig = clientConfig || {
     ssid: null,
