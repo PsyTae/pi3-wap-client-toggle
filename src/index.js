@@ -12,6 +12,8 @@ function Iface(iface, apConfig, clientConfig) {
   };
   this.apConfig.dhcp = false;
   this.apConfig.mac = this.getMacAddress(this.iface);
+  this.apConfig.dhcpFirst;
+  this.apConfig.dhcpLast;
   this.apConfig.subnet = this.getSubNet(this.apConfig.address, this.apConfig.subnetMask);
 
   this.apConfig.dhcpFirst = ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10);
