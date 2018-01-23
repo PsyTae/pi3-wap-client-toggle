@@ -1,4 +1,4 @@
-/* eslint consistent-return: 0 */
+/* eslint consistent-return: 0, no-param-reassign: 0 */
 
 const child = require("child_process");
 const ip = require("ip");
@@ -65,5 +65,37 @@ Iface.prototype.getMacAddress = iface =>
     .execFileSync("cat", [`/sys/class/net/${iface}/address`])
     .toString()
     .trim();
+
+Iface.prototype.stopServices = () => {
+  child
+    .execFileSync("systemclt", ["stop", "dnsmasq"])
+    .toString()
+    .trim();
+  child
+    .execFileSync("systemclt", ["stop", "hostapd"])
+    .toString()
+    .trim();
+};
+
+Iface.prototype.startServices = callback =>
+  new Promise((resolve, reject) => {
+    child.execFile("systemclt", ["start", "dnsmasq"], (dnsError, dnsStdout, dnsStderr) => {
+      if (dnsError || dnsStderr) {
+        if (!dnsError && dnsStderr) {
+          dnsError = new Error(dnsStderr);
+        }
+        return callback ? callback(dnsError) : reject(dnsError);
+      }
+      child.execFile("systemclt", ["start", "hostapd"], (hostError, hostStdout, hostStdErr) => {
+        if (hostError || hostStdErr) {
+          if (!hostError && hostStdErr) {
+            hostError = new Error(hostStdErr);
+          }
+          return callback ? callback(hostError) : reject(hostError);
+        }
+        return callback ? callback(null, true) : resolve(true);
+      });
+    });
+  });
 
 module.exports = Iface;
