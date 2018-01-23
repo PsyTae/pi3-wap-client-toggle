@@ -28,8 +28,8 @@ const os = require("os");
 function Iface(iface, clientConfig, apConfig) {
   if (this instanceof Iface) {
     this.iface = iface ? iface.toLowerCase() : "wlan1";
-    this.apConfig = {};
     this.clientConfig = {};
+    this.apConfig = {};
 
     this.apConfig.address = apConfig.address ? apConfig.address : "192.168.254.0";
     this.apConfig.subnetMask = apConfig.subnetMask ? apConfig.subnetMask : "255.255.255.0";
