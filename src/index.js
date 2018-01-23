@@ -37,8 +37,12 @@ function Iface(iface, clientConfig, apConfig) {
     this.apConfig.mac = this.getMacAddress(this.iface);
     this.apConfig.dhcpPoolSize = apConfig.dhcpPoolSize ? apConfig.dhcpPoolSize : 10;
     this.apConfig.dhcpLease = apConfig.dhcpLease ? apConfig.dhcpLease : "12h";
-    this.apConfig.dhcpFirst = ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10);
-    this.apConfig.dhcpLast = ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10 + this.apConfig.dhcpPoolSize);
+    this.apConfig.dhcpFirst = this.apConfig.subnet.contains(ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10))
+      ? ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10)
+      : ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 1);
+    this.apConfig.dhcpLast = this.apConfig.subnet.contains(ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10 + this.apConfig.dhcpPoolSize))
+      ? ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10 + this.apConfig.dhcpPoolSize)
+      : ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 1 + this.apConfig.dhcpPoolSize);
     this.apConfig.wapSSID = apConfig.wapSSID ? apConfig.wapSSID : os.hostname().toUpperCase();
     this.apConfig.wapPASS = apConfig.wapPASS ? apConfig.wapPASS : "Pa$$w0rd";
 
