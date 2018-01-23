@@ -10,16 +10,16 @@ function Iface(iface, clientConfig, apConfig) {
     this.apConfig = apConfig || {
       address: "192.168.254.0",
       dhcpPoolSize: 10,
-      subnetMask: "255.255.255.0"
+      dhcpLease: "12h",
+      subnetMask: "255.255.255.0",
+      WAPssid: os.hostname(),
+      WAPpass: "0123456789"
     };
     this.apConfig.dhcp = false;
     this.apConfig.mac = this.getMacAddress(this.iface);
     this.apConfig.subnet = this.getSubNet(this.apConfig.address, this.apConfig.subnetMask);
     this.apConfig.dhcpFirst = ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10);
     this.apConfig.dhcpLast = ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10 + this.apConfig.dhcpPoolSize);
-    this.apConfig.dhcpLease = "12h";
-    this.apConfig.WAPssid = os.hostname();
-    this.apConfig.WAPpass = "0123456789";
 
     this.clientConfig = clientConfig || {
       ssid: null,
