@@ -4,10 +4,10 @@ const child = require("child_process");
 const ip = require("ip");
 
 function Iface(iface, apConfig, clientConfig) {
-  this.iface = iface ? iface.toLowerCase() : "wlan0";
+  this.iface = iface ? iface.toLowerCase() : "wlan1";
   this.apConfig = apConfig || {
     address: "192.168.254.0",
-    dhcpClients: 10,
+    dhcpPoolSize: 10,
     subnetMask: "255.255.255.0"
   };
   this.apConfig.dhcp = false;
@@ -16,6 +16,10 @@ function Iface(iface, apConfig, clientConfig) {
     this.apConfig.address,
     this.apConfig.subnetMask
   );
+
+  this.apConfig.dhcpFirst = ip.toBuffer(this.apConfig.subnet.networkAddress);
+  this.apConfig.dhcpLast = ip.toBuffer(this.apConfig.subnet.networkAddress);
+
   this.clientConfig = clientConfig || {
     ssid: null,
     password: null
