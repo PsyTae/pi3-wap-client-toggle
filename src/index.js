@@ -7,6 +7,7 @@ function Iface(iface, apConfig, clientConfig) {
   this.iface = iface ? iface.toLowerCase() : "wlan0";
   this.apConfig = apConfig || {
     address: "192.168.254.0",
+    dhcpClients: 10,
     subnetMask: "255.255.255.0"
   };
   this.apConfig.dhcp = false;
