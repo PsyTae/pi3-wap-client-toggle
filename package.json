@@ -1,20 +1,17 @@
 {
   "name": "pi3-wap-client-toggle",
   "version": "0.0.1",
-  "description": "given an iface will flip back and forth between two states as setup in the constructor",
+  "description":
+    "given an iface will flip back and forth between two states as setup in the constructor",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://git-codecommit.us-east-1.amazonaws.com/v1/repos/sub_pi3-wap-client-toggle_node"
+    "url": "https://github.com/PsyTae/pi3-wap-client-toggle.git"
   },
-  "keywords": [
-    "pi3",
-    "hostap",
-    "dnsmasq"
-  ],
+  "keywords": ["pi3", "hostap", "dnsmasq"],
   "author": "Shaun Branham <'Shaun.Branham@digitalallyinc.com'>",
   "license": "ISC",
   "dependencies": {
