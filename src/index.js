@@ -12,13 +12,10 @@ function Iface(iface, apConfig, clientConfig) {
   };
   this.apConfig.dhcp = false;
   this.apConfig.mac = this.getMacAddress(this.iface);
-  this.apConfig.subnet = this.getSubNet(
-    this.apConfig.address,
-    this.apConfig.subnetMask
-  );
+  this.apConfig.subnet = this.getSubNet(this.apConfig.address, this.apConfig.subnetMask);
 
-  this.apConfig.dhcpFirst = ip.toBuffer(this.apConfig.subnet.networkAddress);
-  this.apConfig.dhcpLast = ip.toBuffer(this.apConfig.subnet.networkAddress);
+  this.apConfig.dhcpFirst = ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10);
+  this.apConfig.dhcpLast = ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10 + this.apConfig.dhcpPoolSize);
 
   this.clientConfig = clientConfig || {
     ssid: null,
