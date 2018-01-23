@@ -17,6 +17,8 @@ const os = require("os");
  * @property {string} [dhcpLease="12h"] - string representing how long the lease will be 123 = 123 seconds, 45m = 45 minutes, 12h = 12 hours, infinite = no expiration(not recomended)
  * @property {string} [wapSSID="[HOSTNAME]"] - SSID to allow clients to connect to
  * @property {string} [wapPASS="Pa$$w0rd"] - password to use to connect to SSID
+ * @property {boolean} [wapBroadcast=true] - Channel WAP will radiate on
+ * @property {number} [wapChannel=6] - Channel WAP will radiate on
  */
 
 /**
@@ -39,10 +41,12 @@ function Iface(iface, clientConfig, apConfig) {
     this.apConfig.dhcpLease = apConfig.dhcpLease ? apConfig.dhcpLease : "12h";
     this.apConfig.dhcpFirst = this.apConfig.subnet.contains(ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10))
       ? ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10)
-      : ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 1);
+      : ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 2);
     this.apConfig.dhcpLast = this.apConfig.subnet.contains(ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10 + this.apConfig.dhcpPoolSize))
       ? ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 10 + this.apConfig.dhcpPoolSize)
-      : ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 1 + this.apConfig.dhcpPoolSize);
+      : ip.fromLong(ip.toLong(this.apConfig.subnet.networkAddress) + 2 + this.apConfig.dhcpPoolSize);
+    this.apConfig.wapChannel = apConfig.wapChannel ? apConfig.wapChannel : 6;
+    this.apConfig.wapBroadcast = apConfig.wapBroadcast ? apConfig.wapBroadcast : true;
     this.apConfig.wapSSID = apConfig.wapSSID ? apConfig.wapSSID : os.hostname().toUpperCase();
     this.apConfig.wapPASS = apConfig.wapPASS ? apConfig.wapPASS : "Pa$$w0rd";
 
