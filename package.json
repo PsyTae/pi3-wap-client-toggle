@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description":
     "given an iface will flip back and forth between two states as setup in the constructor",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
