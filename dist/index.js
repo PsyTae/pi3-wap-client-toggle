@@ -43,29 +43,35 @@ function Iface() {
     return _ip2.default.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
   };
 
-  var stopServices = function stopServices(callback) {
+  var startHostapd = function startHostapd(callback) {
     return new Promise(function (resolve, reject) {
-      _child_process2.default.execFile("systemctl", ["stop", "dnsmasq"], function (dnsError, dnsStdout, dnsStderr) {
-        if (dnsError || dnsStderr) {
-          if (!dnsError && dnsStderr) {
-            dnsError = new Error(dnsStderr);
+      _child_process2.default.execFile("systemctl", ["start", "hostapd"], function (hostError, hostStdout, hostStdErr) {
+        if (hostError || hostStdErr) {
+          if (!hostError && hostStdErr) {
+            hostError = new Error(hostStdErr);
           }
-          return callback ? callback(dnsError) : reject(dnsError);
+          return callback ? callback(hostError) : reject(hostError);
         }
-        _child_process2.default.execFile("systemctl", ["stop", "hostapd"], function (hostError, hostStdout, hostStdErr) {
-          if (hostError || hostStdErr) {
-            if (!hostError && hostStdErr) {
-              hostError = new Error(hostStdErr);
-            }
-            return callback ? callback(hostError) : reject(hostError);
-          }
-          return callback ? callback(null, true) : resolve();
-        });
+        return callback ? callback(null, hostStdout) : resolve(hostStdout);
       });
     });
   };
 
-  var startServices = function startServices(callback) {
+  var stopHostapd = function stopHostapd(callback) {
+    return new Promise(function (resolve, reject) {
+      _child_process2.default.execFile("systemctl", ["stop", "hostapd"], function (hostError, hostStdout, hostStdErr) {
+        if (hostError || hostStdErr) {
+          if (!hostError && hostStdErr) {
+            hostError = new Error(hostStdErr);
+          }
+          return callback ? callback(hostError) : reject(hostError);
+        }
+        return callback ? callback(null, hostStdout) : resolve(hostStdout);
+      });
+    });
+  };
+
+  var startDnsmasq = function startDnsmasq(callback) {
     return new Promise(function (resolve, reject) {
       _child_process2.default.execFile("systemctl", ["start", "dnsmasq"], function (dnsError, dnsStdout, dnsStderr) {
         if (dnsError || dnsStderr) {
@@ -74,15 +80,41 @@ function Iface() {
           }
           return callback ? callback(dnsError) : reject(dnsError);
         }
-        _child_process2.default.execFile("systemctl", ["start", "hostapd"], function (hostError, hostStdout, hostStdErr) {
-          if (hostError || hostStdErr) {
-            if (!hostError && hostStdErr) {
-              hostError = new Error(hostStdErr);
-            }
-            return callback ? callback(hostError) : reject(hostError);
+        return callback ? callback(null, dnsStdout) : resolve(dnsStdout);
+      });
+    });
+  };
+
+  var stopDnsmasq = function stopDnsmasq(callback) {
+    return new Promise(function (resolve, reject) {
+      _child_process2.default.execFile("systemctl", ["stop", "dnsmasq"], function (dnsError, dnsStdout, dnsStderr) {
+        if (dnsError || dnsStderr) {
+          if (!dnsError && dnsStderr) {
+            dnsError = new Error(dnsStderr);
           }
-          return callback ? callback(null, true) : resolve();
-        });
+          return callback ? callback(dnsError) : reject(dnsError);
+        }
+        return callback ? callback(null, dnsStdout) : resolve(dnsStdout);
+      });
+    });
+  };
+
+  var stopServices = function stopServices(callback) {
+    return new Promise(function (resolve, reject) {
+      stopHostapd.then(stopDnsmasq).then(function (fullfilled) {
+        return callback ? callback(null, fullfilled) : resolve(fullfilled);
+      }).catch(function (error) {
+        return callback ? callback(error) : reject(error);
+      });
+    });
+  };
+
+  var startServices = function startServices(callback) {
+    return new Promise(function (resolve, reject) {
+      startDnsmasq.then(startHostapd).then(function (fullfilled) {
+        return callback ? callback(null, fullfilled) : resolve(fullfilled);
+      }).catch(function (error) {
+        return callback ? callback(error) : reject(error);
       });
     });
   };

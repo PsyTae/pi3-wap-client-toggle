@@ -34,28 +34,33 @@ function Iface() {
 
   const getIfaceSubNet = () => ip.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
 
-  const stopServices = callback =>
+  const startHostapd = callback =>
     new Promise((resolve, reject) => {
-      child.execFile("systemctl", ["stop", "dnsmasq"], (dnsError, dnsStdout, dnsStderr) => {
-        if (dnsError || dnsStderr) {
-          if (!dnsError && dnsStderr) {
-            dnsError = new Error(dnsStderr);
+      child.execFile("systemctl", ["start", "hostapd"], (hostError, hostStdout, hostStdErr) => {
+        if (hostError || hostStdErr) {
+          if (!hostError && hostStdErr) {
+            hostError = new Error(hostStdErr);
           }
-          return callback ? callback(dnsError) : reject(dnsError);
+          return callback ? callback(hostError) : reject(hostError);
         }
-        child.execFile("systemctl", ["stop", "hostapd"], (hostError, hostStdout, hostStdErr) => {
-          if (hostError || hostStdErr) {
-            if (!hostError && hostStdErr) {
-              hostError = new Error(hostStdErr);
-            }
-            return callback ? callback(hostError) : reject(hostError);
-          }
-          return callback ? callback(null, true) : resolve();
-        });
+        return callback ? callback(null, hostStdout) : resolve(hostStdout);
       });
     });
 
-  const startServices = callback =>
+  const stopHostapd = callback =>
+    new Promise((resolve, reject) => {
+      child.execFile("systemctl", ["stop", "hostapd"], (hostError, hostStdout, hostStdErr) => {
+        if (hostError || hostStdErr) {
+          if (!hostError && hostStdErr) {
+            hostError = new Error(hostStdErr);
+          }
+          return callback ? callback(hostError) : reject(hostError);
+        }
+        return callback ? callback(null, hostStdout) : resolve(hostStdout);
+      });
+    });
+
+  const startDnsmasq = callback =>
     new Promise((resolve, reject) => {
       child.execFile("systemctl", ["start", "dnsmasq"], (dnsError, dnsStdout, dnsStderr) => {
         if (dnsError || dnsStderr) {
@@ -64,16 +69,37 @@ function Iface() {
           }
           return callback ? callback(dnsError) : reject(dnsError);
         }
-        child.execFile("systemctl", ["start", "hostapd"], (hostError, hostStdout, hostStdErr) => {
-          if (hostError || hostStdErr) {
-            if (!hostError && hostStdErr) {
-              hostError = new Error(hostStdErr);
-            }
-            return callback ? callback(hostError) : reject(hostError);
-          }
-          return callback ? callback(null, true) : resolve();
-        });
+        return callback ? callback(null, dnsStdout) : resolve(dnsStdout);
       });
+    });
+
+  const stopDnsmasq = callback =>
+    new Promise((resolve, reject) => {
+      child.execFile("systemctl", ["stop", "dnsmasq"], (dnsError, dnsStdout, dnsStderr) => {
+        if (dnsError || dnsStderr) {
+          if (!dnsError && dnsStderr) {
+            dnsError = new Error(dnsStderr);
+          }
+          return callback ? callback(dnsError) : reject(dnsError);
+        }
+        return callback ? callback(null, dnsStdout) : resolve(dnsStdout);
+      });
+    });
+
+  const stopServices = callback =>
+    new Promise((resolve, reject) => {
+      stopHostapd
+        .then(stopDnsmasq)
+        .then(fullfilled => (callback ? callback(null, fullfilled) : resolve(fullfilled)))
+        .catch(error => (callback ? callback(error) : reject(error)));
+    });
+
+  const startServices = callback =>
+    new Promise((resolve, reject) => {
+      startDnsmasq
+        .then(startHostapd)
+        .then(fullfilled => (callback ? callback(null, fullfilled) : resolve(fullfilled)))
+        .catch(error => (callback ? callback(error) : reject(error)));
     });
 
   const toggleAP = state => {
