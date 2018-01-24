@@ -105,7 +105,7 @@ function Iface() {
    * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
    */
   const initIface = (iface, startAsHotspot, clientConfig, apConfig) => {
-    obj.iface = iface ? iface.toLowerCase() : "wlan1";
+    obj.iface = iface ? iface.toLowerCase() : "wlan0";
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
     obj.clientConfig = {};
     obj.apConfig = {};
