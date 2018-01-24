@@ -12,6 +12,8 @@ var _os = require("os");
 
 var _os2 = _interopRequireDefault(_os);
 
+var _util = require("util");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -32,6 +34,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @property {number} [wapChannel=6] - Channel WAP will radiate on
  */
 
+// npm i -D babel-cli babel-preset-env
+/* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }] */
+
 function Iface() {
   var obj = {};
 
@@ -43,84 +48,32 @@ function Iface() {
     return _ip2.default.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
   };
 
-  var startHostapd = function startHostapd(callback) {
-    return new Promise(function (resolve, reject) {
-      _child_process2.default.execFile("systemctl", ["start", "hostapd"], function (hostError, hostStdout, hostStdErr) {
-        if (hostError || hostStdErr) {
-          if (!hostError && hostStdErr) {
-            hostError = new Error(hostStdErr);
-          }
-          return callback ? callback(hostError) : reject(hostError);
-        }
-        return callback ? callback(null, hostStdout) : resolve(hostStdout);
-      });
-    });
-  };
+  var execFilePromise = (0, _util.promisify)(_child_process2.default.execFile);
 
-  var stopHostapd = function stopHostapd(callback) {
+  var stopServices = function stopServices() {
     return new Promise(function (resolve, reject) {
-      _child_process2.default.execFile("systemctl", ["stop", "hostapd"], function (hostError, hostStdout, hostStdErr) {
-        if (hostError || hostStdErr) {
-          if (!hostError && hostStdErr) {
-            hostError = new Error(hostStdErr);
-          }
-          return callback ? callback(hostError) : reject(hostError);
-        }
-        return callback ? callback(null, hostStdout) : resolve(hostStdout);
-      });
-    });
-  };
-
-  var startDnsmasq = function startDnsmasq(callback) {
-    return new Promise(function (resolve, reject) {
-      _child_process2.default.execFile("systemctl", ["start", "dnsmasq"], function (dnsError, dnsStdout, dnsStderr) {
-        if (dnsError || dnsStderr) {
-          if (!dnsError && dnsStderr) {
-            dnsError = new Error(dnsStderr);
-          }
-          return callback ? callback(dnsError) : reject(dnsError);
-        }
-        return callback ? callback(null, dnsStdout) : resolve(dnsStdout);
-      });
-    });
-  };
-
-  var stopDnsmasq = function stopDnsmasq(callback) {
-    return new Promise(function (resolve, reject) {
-      _child_process2.default.execFile("systemctl", ["stop", "dnsmasq"], function (dnsError, dnsStdout, dnsStderr) {
-        if (dnsError || dnsStderr) {
-          if (!dnsError && dnsStderr) {
-            dnsError = new Error(dnsStderr);
-          }
-          return callback ? callback(dnsError) : reject(dnsError);
-        }
-        return callback ? callback(null, dnsStdout) : resolve(dnsStdout);
-      });
-    });
-  };
-
-  var stopServices = function stopServices(callback) {
-    return new Promise(function (resolve, reject) {
-      stopHostapd.then(stopDnsmasq).then(function (fullfilled) {
-        return callback ? callback(null, fullfilled) : resolve(fullfilled);
+      execFilePromise("systemctl", ["stop", "hostapd"]).then(execFilePromise("systemctl", ["stop", "dnsmasq"])).then(function () {
+        return resolve();
       }).catch(function (error) {
-        return callback ? callback(error) : reject(error);
+        return reject(error);
       });
     });
   };
 
-  var startServices = function startServices(callback) {
+  var startServices = function startServices() {
     return new Promise(function (resolve, reject) {
-      startDnsmasq.then(startHostapd).then(function (fullfilled) {
-        return callback ? callback(null, fullfilled) : resolve(fullfilled);
+      execFilePromise("systemctl", ["start", "dnsmasq"]).then(execFilePromise("systemctl", ["start", "hostapd"])).then(function () {
+        return resolve();
       }).catch(function (error) {
-        return callback ? callback(error) : reject(error);
+        return reject(error);
       });
     });
   };
 
   var toggleAP = function toggleAP(state) {
     // obj.actingAsHotSpot = !state;
+
+    stopServices();
     if (!obj.actingAsHotSpot) {
       // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
       // todo: check files to see if services need to be stopped and files need to be reconfigured
@@ -180,7 +133,6 @@ function Iface() {
   };
 
   return publicAPI;
-} // npm i -D babel-cli babel-preset-env
-/* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }] */
+}
 
 module.exports = Iface;

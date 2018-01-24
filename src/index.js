@@ -4,6 +4,7 @@
 import child from "child_process";
 import ip from "ip";
 import os from "os";
+import { promisify } from "util";
 
 /**
  * @typedef {Object} clientConfig
@@ -34,76 +35,28 @@ function Iface() {
 
   const getIfaceSubNet = () => ip.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
 
-  const startHostapd = callback =>
+  const execFilePromise = promisify(child.execFile);
+
+  const stopServices = () =>
     new Promise((resolve, reject) => {
-      child.execFile("systemctl", ["start", "hostapd"], (hostError, hostStdout, hostStdErr) => {
-        if (hostError || hostStdErr) {
-          if (!hostError && hostStdErr) {
-            hostError = new Error(hostStdErr);
-          }
-          return callback ? callback(hostError) : reject(hostError);
-        }
-        return callback ? callback(null, hostStdout) : resolve(hostStdout);
-      });
+      execFilePromise("systemctl", ["stop", "hostapd"])
+        .then(execFilePromise("systemctl", ["stop", "dnsmasq"]))
+        .then(() => resolve())
+        .catch(error => reject(error));
     });
 
-  const stopHostapd = callback =>
+  const startServices = () =>
     new Promise((resolve, reject) => {
-      child.execFile("systemctl", ["stop", "hostapd"], (hostError, hostStdout, hostStdErr) => {
-        if (hostError || hostStdErr) {
-          if (!hostError && hostStdErr) {
-            hostError = new Error(hostStdErr);
-          }
-          return callback ? callback(hostError) : reject(hostError);
-        }
-        return callback ? callback(null, hostStdout) : resolve(hostStdout);
-      });
-    });
-
-  const startDnsmasq = callback =>
-    new Promise((resolve, reject) => {
-      child.execFile("systemctl", ["start", "dnsmasq"], (dnsError, dnsStdout, dnsStderr) => {
-        if (dnsError || dnsStderr) {
-          if (!dnsError && dnsStderr) {
-            dnsError = new Error(dnsStderr);
-          }
-          return callback ? callback(dnsError) : reject(dnsError);
-        }
-        return callback ? callback(null, dnsStdout) : resolve(dnsStdout);
-      });
-    });
-
-  const stopDnsmasq = callback =>
-    new Promise((resolve, reject) => {
-      child.execFile("systemctl", ["stop", "dnsmasq"], (dnsError, dnsStdout, dnsStderr) => {
-        if (dnsError || dnsStderr) {
-          if (!dnsError && dnsStderr) {
-            dnsError = new Error(dnsStderr);
-          }
-          return callback ? callback(dnsError) : reject(dnsError);
-        }
-        return callback ? callback(null, dnsStdout) : resolve(dnsStdout);
-      });
-    });
-
-  const stopServices = callback =>
-    new Promise((resolve, reject) => {
-      stopHostapd
-        .then(stopDnsmasq)
-        .then(fullfilled => (callback ? callback(null, fullfilled) : resolve(fullfilled)))
-        .catch(error => (callback ? callback(error) : reject(error)));
-    });
-
-  const startServices = callback =>
-    new Promise((resolve, reject) => {
-      startDnsmasq
-        .then(startHostapd)
-        .then(fullfilled => (callback ? callback(null, fullfilled) : resolve(fullfilled)))
-        .catch(error => (callback ? callback(error) : reject(error)));
+      execFilePromise("systemctl", ["start", "dnsmasq"])
+        .then(execFilePromise("systemctl", ["start", "hostapd"]))
+        .then(() => resolve())
+        .catch(error => reject(error));
     });
 
   const toggleAP = state => {
     // obj.actingAsHotSpot = !state;
+
+    stopServices();
     if (!obj.actingAsHotSpot) {
       // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
       // todo: check files to see if services need to be stopped and files need to be reconfigured
