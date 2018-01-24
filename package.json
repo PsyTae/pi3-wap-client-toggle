@@ -1,10 +1,12 @@
 {
   "name": "pi3-wap-client-toggle",
   "version": "0.0.1",
-  "description":
-    "given an iface will flip back and forth between two states as setup in the constructor",
-  "main": "src/index.js",
+  "description": "given an iface will flip back and forth between two states as setup in the constructor",
+  "main": "dist/index.js",
   "scripts": {
+    "build": "babel src -d dist",
+    "server": "node dist/index.js",
+    "start": "babel-node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,5 +18,9 @@
   "license": "ISC",
   "dependencies": {
     "ip": "^1.1.5"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1"
   }
 }

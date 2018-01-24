@@ -1,9 +1,18 @@
-// npm i -D babel-cli babel-preset-env
-/* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }] */
+"use strict";
 
-import child from "child_process";
-import ip from "ip";
-import os from "os";
+var _child_process = require("child_process");
+
+var _child_process2 = _interopRequireDefault(_child_process);
+
+var _ip = require("ip");
+
+var _ip2 = _interopRequireDefault(_ip);
+
+var _os = require("os");
+
+var _os2 = _interopRequireDefault(_os);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
  * @typedef {Object} clientConfig
@@ -24,26 +33,26 @@ import os from "os";
  */
 
 function Iface() {
-  const obj = {};
+  var obj = {};
 
-  const getIfaceMacAddress = () =>
-    child
-      .execFileSync("cat", [`/sys/class/net/${obj.iface}/address`])
-      .toString()
-      .trim();
+  var getIfaceMacAddress = function getIfaceMacAddress() {
+    return _child_process2.default.execFileSync("cat", ["/sys/class/net/" + obj.iface + "/address"]).toString().trim();
+  };
 
-  const getIfaceSubNet = () => ip.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
+  var getIfaceSubNet = function getIfaceSubNet() {
+    return _ip2.default.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
+  };
 
-  const stopServices = callback =>
-    new Promise((resolve, reject) => {
-      child.execFile("systemctl", ["stop", "dnsmasq"], (dnsError, dnsStdout, dnsStderr) => {
+  var stopServices = function stopServices(callback) {
+    return new Promise(function (resolve, reject) {
+      _child_process2.default.execFile("systemctl", ["stop", "dnsmasq"], function (dnsError, dnsStdout, dnsStderr) {
         if (dnsError || dnsStderr) {
           if (!dnsError && dnsStderr) {
             dnsError = new Error(dnsStderr);
           }
           return callback ? callback(dnsError) : reject(dnsError);
         }
-        child.execFile("systemctl", ["stop", "hostapd"], (hostError, hostStdout, hostStdErr) => {
+        _child_process2.default.execFile("systemctl", ["stop", "hostapd"], function (hostError, hostStdout, hostStdErr) {
           if (hostError || hostStdErr) {
             if (!hostError && hostStdErr) {
               hostError = new Error(hostStdErr);
@@ -54,17 +63,18 @@ function Iface() {
         });
       });
     });
+  };
 
-  const startServices = callback =>
-    new Promise((resolve, reject) => {
-      child.execFile("systemctl", ["start", "dnsmasq"], (dnsError, dnsStdout, dnsStderr) => {
+  var startServices = function startServices(callback) {
+    return new Promise(function (resolve, reject) {
+      _child_process2.default.execFile("systemctl", ["start", "dnsmasq"], function (dnsError, dnsStdout, dnsStderr) {
         if (dnsError || dnsStderr) {
           if (!dnsError && dnsStderr) {
             dnsError = new Error(dnsStderr);
           }
           return callback ? callback(dnsError) : reject(dnsError);
         }
-        child.execFile("systemctl", ["start", "hostapd"], (hostError, hostStdout, hostStdErr) => {
+        _child_process2.default.execFile("systemctl", ["start", "hostapd"], function (hostError, hostStdout, hostStdErr) {
           if (hostError || hostStdErr) {
             if (!hostError && hostStdErr) {
               hostError = new Error(hostStdErr);
@@ -75,8 +85,9 @@ function Iface() {
         });
       });
     });
+  };
 
-  const toggleAP = state => {
+  var toggleAP = function toggleAP(state) {
     // obj.actingAsHotSpot = !state;
     if (!obj.actingAsHotSpot) {
       // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
@@ -87,14 +98,14 @@ function Iface() {
       // todo: start services
       // todo: set obj.actingAsHotSpot = true
     } else {
-      // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
-      // todo: check files to see if services need to be stopped and files need to be reconfigured
-      // todo: backup files if originals are not already saved
-      // todo: stop services
-      // todo: setup files to connect to wifi
-      // todo: start services
-      // todo: set obj.actingAsHotSpot = false
-    }
+        // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
+        // todo: check files to see if services need to be stopped and files need to be reconfigured
+        // todo: backup files if originals are not already saved
+        // todo: stop services
+        // todo: setup files to connect to wifi
+        // todo: start services
+        // todo: set obj.actingAsHotSpot = false
+      }
   };
 
   /**
@@ -104,7 +115,7 @@ function Iface() {
    * @param {clientConfig} clientConfig - Object used to Connect to Outside Network
    * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
    */
-  const initIface = (iface, startAsHotspot, clientConfig, apConfig) => {
+  var initIface = function initIface(iface, startAsHotspot, clientConfig, apConfig) {
     obj.iface = iface ? iface.toLowerCase() : "wlan1";
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
     obj.clientConfig = {};
@@ -115,15 +126,11 @@ function Iface() {
     obj.apConfig.mac = getIfaceMacAddress(obj.iface);
     obj.apConfig.dhcpPoolSize = apConfig.dhcpPoolSize ? apConfig.dhcpPoolSize : 10;
     obj.apConfig.dhcpLease = apConfig.dhcpLease ? apConfig.dhcpLease : "12h";
-    obj.apConfig.dhcpFirst = obj.apConfig.subnet.contains(ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10))
-      ? ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10)
-      : ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 2);
-    obj.apConfig.dhcpLast = obj.apConfig.subnet.contains(ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize))
-      ? ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize)
-      : ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 2 + obj.apConfig.dhcpPoolSize);
+    obj.apConfig.dhcpFirst = obj.apConfig.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 2);
+    obj.apConfig.dhcpLast = obj.apConfig.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 2 + obj.apConfig.dhcpPoolSize);
     obj.apConfig.wapChannel = apConfig.wapChannel ? apConfig.wapChannel : 6;
     obj.apConfig.wapBroadcast = apConfig.wapBroadcast ? apConfig.wapBroadcast : true;
-    obj.apConfig.wapSSID = apConfig.wapSSID ? apConfig.wapSSID : os.hostname().toUpperCase();
+    obj.apConfig.wapSSID = apConfig.wapSSID ? apConfig.wapSSID : _os2.default.hostname().toUpperCase();
     obj.apConfig.wapPASS = apConfig.wapPASS ? apConfig.wapPASS : "Pa$$w0rd";
 
     obj.clientConfig.ssid = clientConfig.ssid ? clientConfig.ssid : null;
@@ -134,13 +141,14 @@ function Iface() {
     toggleAP(!obj.actingAsHotSpot);
   };
 
-  const publicAPI = {
+  var publicAPI = {
     getCurrentState: obj,
-    initIface,
-    toggleAP
+    initIface: initIface,
+    toggleAP: toggleAP
   };
 
   return publicAPI;
-}
+} // npm i -D babel-cli babel-preset-env
+/* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }] */
 
 module.exports = Iface;
