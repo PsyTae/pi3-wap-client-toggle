@@ -32,6 +32,22 @@ function Network() {
     return _ip2.default.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
   };
 
+  var addKeyPair = function addKeyPair(elem) {
+    return new Promise(function (resolve, reject) {
+      try {
+        if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
+        if (!obj[elem].server.subnet) {
+          obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
+          obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2);
+          obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
+        }
+        console.log(elem, obj[elem]);
+        return resolve(obj[elem]);
+      } catch (err) {
+        return reject(err);
+      }
+    });
+  };
   var execFilePromise = (0, _util.promisify)(_child_process2.default.execFile);
 
   var stopServices = function stopServices() {
@@ -79,7 +95,7 @@ function Network() {
 
   var initNetwork = function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(startAsHotspot, setupObj) {
-      var objKeys, i;
+      var objKeys;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
@@ -125,34 +141,33 @@ function Network() {
               objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1);
               objKeys.splice(objKeys.indexOf("static"), 1);
 
-              i = 0;
+              Promise.all(objKeys.map(addKeyPair)).then(console.dir(obj, { depth: null, colors: true }));
+
+              /*
+              obj.apConfig.address = apConfig.address ? apConfig.address : "192.168.254.0";
+              obj.apConfig.subnetMask = apConfig.subnetMask ? apConfig.subnetMask : "255.255.255.0";
+              obj.apConfig.subnet = getIfaceSubNet(obj.apConfig.address, obj.apConfig.subnetMask);
+              obj.apConfig.mac = getIfaceMacAddress(obj.iface);
+              obj.apConfig.dhcpPoolSize = apConfig.dhcpPoolSize ? apConfig.dhcpPoolSize : 10;
+              obj.apConfig.dhcpLease = apConfig.dhcpLease ? apConfig.dhcpLease : "12h";
+              obj.apConfig.dhcpFirst = obj.apConfig.subnet.contains(ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10))
+                ? ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10)
+                : ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 2);
+              obj.apConfig.dhcpLast = obj.apConfig.subnet.contains(ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize))
+                ? ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize)
+                : ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 2 + obj.apConfig.dhcpPoolSize);
+              obj.apConfig.wapChannel = apConfig.wapChannel ? apConfig.wapChannel : 6;
+              obj.apConfig.wapBroadcast = apConfig.wapBroadcast ? apConfig.wapBroadcast : true;
+              obj.apConfig.wapSSID = apConfig.wapSSID ? apConfig.wapSSID : os.hostname().toUpperCase();
+              obj.apConfig.wapPASS = apConfig.wapPASS ? apConfig.wapPASS : "Pa$$w0rd";
+               obj.clientConfig.ssid = clientConfig.ssid ? clientConfig.ssid : null;
+              obj.clientConfig.pass = clientConfig.pass ? clientConfig.pass : null;
+              */
+              // ! if obj.actingAsHotSpot === true then sends false to turn on hostspot
+              // ! if obj.actingAsHotSpot === false then sends true to turn on client
+              // toggleAP(!obj.actingAsHotSpot);
 
             case 30:
-              if (!(i < objKeys.length)) {
-                _context.next = 39;
-                break;
-              }
-
-              if (obj[objKeys[i]].mac) {
-                _context.next = 35;
-                break;
-              }
-
-              _context.next = 34;
-              return getIfaceMacAddress(objKeys[i]);
-
-            case 34:
-              obj[objKeys[i]].mac = _context.sent;
-
-            case 35:
-              console.log(objKeys[i], obj[objKeys[i]]);
-
-            case 36:
-              i += 1;
-              _context.next = 30;
-              break;
-
-            case 39:
             case "end":
               return _context.stop();
           }
