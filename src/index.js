@@ -102,7 +102,9 @@ function Network() {
       setupObj && setupObj.wlan0 && setupObj.wlan0.server && setupObj.wlan0.server.subnetMask ? setupObj.wlan0.server.subnetMask : "255.255.255.0";
 
     const objKeys = Object.keys(obj);
+    console.log(objKeys);
     objKeys.splice(objKeys.indexOf("static"), 1);
+    console.log(objKeys);
     objKeys.forEach(elem => {
       console.log(elem, obj[elem]);
       /*
