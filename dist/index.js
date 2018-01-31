@@ -80,35 +80,36 @@ function Network() {
 
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
 
-    obj.eth0 = {};
-    obj.static = [];
-    obj.wlan0 = {};
+    obj.eth0 = obj.eth0 || {};
+    obj.static = obj.static || [];
+    obj.wlan0 = obj.wlan0 || {};
 
-    obj.eth0.server = {};
-    obj.wlan0.client = {};
-    obj.wlan0.server = {};
+    obj.eth0.server = obj.eth0.server || {};
+    obj.wlan0.client = obj.wlan0.client || {};
+    obj.wlan0.server = obj.wlan0.server || {};
 
     obj.eth0.mac = null;
-    obj.eth0.server.address = setupObj.eth0.server.address ? setupObj.eth0.server.address : "10.0.0.1";
+
+    obj.eth0.server.address = setupObj.eth0.server.address || "10.0.0.1";
     obj.eth0.server.dhcpFirst = null;
     obj.eth0.server.dhcpLast = null;
-    obj.eth0.server.dhcpLease = setupObj.eth0.server.dhcpLease ? setupObj.eth0.server.dhcpLease : "12h";
-    obj.eth0.server.dhcpPoolSize = setupObj.eth0.server.dhcpPoolSize ? setupObj.eth0.server.dhcpPoolSize : 10;
+    obj.eth0.server.dhcpLease = setupObj.eth0.server.dhcpLease || "12h";
+    obj.eth0.server.dhcpPoolSize = setupObj.eth0.server.dhcpPoolSize || 10;
     obj.eth0.server.subnet = null;
-    obj.eth0.server.subnetMask = setupObj.eth0.server.subnetMask ? setupObj.eth0.server.subnetMask : "255.255.255.0";
+    obj.eth0.server.subnetMask = setupObj.eth0.server.subnetMask || "255.255.255.0";
 
-    obj.wlan0.client.pass = setupObj.wlan0.client.pass ? setupObj.wlan0.client.pass : "VL" + _os2.default.hostname();
-    obj.wlan0.client.ssid = setupObj.wlan0.client.ssid ? setupObj.wlan0.client.ssid : "Pa$$w0rd";
+    obj.wlan0.client.pass = setupObj.wlan0.client.pass || "VL" + _os2.default.hostname();
+    obj.wlan0.client.ssid = setupObj.wlan0.client.ssid || "Pa$$w0rd";
 
     obj.wlan0.mac = null;
 
-    obj.wlan0.server.address = setupObj.wlan0.server.address ? setupObj.wlan0.server.address : "10.10.10.1";
+    obj.wlan0.server.address = setupObj.wlan0.server.address || "10.10.10.1";
     obj.wlan0.server.dhcpFirst = null;
     obj.wlan0.server.dhcpLast = null;
-    obj.wlan0.server.dhcpLease = setupObj.wlan0.server.dhcpLease ? setupObj.wlan0.server.dhcpLease : "12h";
-    obj.wlan0.server.dhcpPoolSize = setupObj.wlan0.server.dhcpPoolSize ? setupObj.wlan0.server.dhcpPoolSize : 10;
+    obj.wlan0.server.dhcpLease = setupObj.wlan0.server.dhcpLease || "12h";
+    obj.wlan0.server.dhcpPoolSize = setupObj.wlan0.server.dhcpPoolSize || 10;
     obj.wlan0.server.subnet = null;
-    obj.wlan0.server.subnetMask = setupObj.wlan0.server.subnetMask ? setupObj.wlan0.server.subnetMask : "255.255.255.0";
+    obj.wlan0.server.subnetMask = setupObj.wlan0.server.subnetMask || "255.255.255.0";
 
     var objKeys = Object.keys(obj);
     objKeys.splice(objKeys.indexOf("static"), 1);
