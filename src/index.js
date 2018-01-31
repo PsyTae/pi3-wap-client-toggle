@@ -9,13 +9,13 @@ import { promisify } from "util";
 function Network() {
   let obj = {};
 
-  const getIfaceMacAddress = () =>
+  const getIfaceMacAddress = iface =>
     child
-      .execFileSync("cat", [`/sys/class/net/${obj.iface}/address`])
+      .execFileSync("cat", [`/sys/class/net/${iface}/address`])
       .toString()
       .trim();
 
-  const getIfaceSubNet = () => ip.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
+  const getIfaceSubNet = (ipAddress, subnet) => ip.subnet(ipAddress, subnet);
 
   const addKeyPair = elem =>
     new Promise((resolve, reject) => {

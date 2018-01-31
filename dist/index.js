@@ -24,12 +24,12 @@ function Network() {
 
   var obj = {};
 
-  var getIfaceMacAddress = function getIfaceMacAddress() {
-    return _child_process2.default.execFileSync("cat", ["/sys/class/net/" + obj.iface + "/address"]).toString().trim();
+  var getIfaceMacAddress = function getIfaceMacAddress(iface) {
+    return _child_process2.default.execFileSync("cat", ["/sys/class/net/" + iface + "/address"]).toString().trim();
   };
 
-  var getIfaceSubNet = function getIfaceSubNet() {
-    return _ip2.default.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
+  var getIfaceSubNet = function getIfaceSubNet(ipAddress, subnet) {
+    return _ip2.default.subnet(ipAddress, subnet);
   };
 
   var addKeyPair = function addKeyPair(elem) {
