@@ -16,28 +16,10 @@ var _util = require("util");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/**
- * @typedef {Object} clientConfig
- * @property {string} ssid - SSID to look for and connect to
- * @property {string} pass - password for WIFI Connection
- */
-
-/**
- * @typedef {Object} apConfig
- * @property {string} [address="192.168.254.0"] - Network IP Address for Access Point to use
- * @property {string} [subnetMask="255.255.255.0"] - Subnet Mask for Access Point to use
- * @property {number} [dhcpPoolSize=25] - Number of DHCP Clients that the Access Point will handle
- * @property {string} [dhcpLease="12h"] - string representing how long the lease will be 123 = 123 seconds, 45m = 45 minutes, 12h = 12 hours, infinite = no expiration(not recomended)
- * @property {string} [wapSSID="[HOSTNAME]"] - SSID to allow clients to connect to
- * @property {string} [wapPASS="Pa$$w0rd"] - password to use to connect to SSID
- * @property {boolean} [wapBroadcast=true] - Channel WAP will radiate on
- * @property {number} [wapChannel=6] - Channel WAP will radiate on
- */
-
 // npm i -D babel-cli babel-preset-env
 /* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }] */
 
-function Iface() {
+function Network() {
   var obj = {};
 
   var getIfaceMacAddress = function getIfaceMacAddress() {
@@ -93,46 +75,83 @@ function Iface() {
       }
   };
 
-  /**
-   * Initialize Interface
-   * @param {string} [iface="wlan1"] - interface name such as wlan0
-   * @param {boolean} [startAsHotspot=true] - Whether or not to start as hotspot or client
-   * @param {clientConfig} clientConfig - Object used to Connect to Outside Network
-   * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
-   */
-  var initIface = function initIface(iface, startAsHotspot, clientConfig, apConfig) {
-    obj.iface = iface ? iface.toLowerCase() : "wlan0";
+  var initNetwork = function initNetwork(startAsHotspot, setupObj) {
+    obj = Object.assign({}, setupObj);
+
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
-    obj.clientConfig = {};
-    obj.apConfig = {};
+
+    obj.eth0 = {};
+    obj.static = [];
+    obj.wlan0 = {};
+
+    obj.eth0.server = {};
+    obj.wlan0.client = {};
+    obj.wlan0.server = {};
+
+    obj.eth0.mac = null;
+    obj.eth0.server.address = setupObj.eth0.server.address ? setupObj.eth0.server.address : "10.0.0.1";
+    obj.eth0.server.dhcpFirst = null;
+    obj.eth0.server.dhcpLast = null;
+    obj.eth0.server.dhcpLease = setupObj.eth0.server.dhcpLease ? setupObj.eth0.server.dhcpLease : "12h";
+    obj.eth0.server.dhcpPoolSize = setupObj.eth0.server.dhcpPoolSize ? setupObj.eth0.server.dhcpPoolSize : 10;
+    obj.eth0.server.subnet = null;
+    obj.eth0.server.subnetMask = setupObj.eth0.server.subnetMask ? setupObj.eth0.server.subnetMask : "255.255.255.0";
+
+    obj.wlan0.client.pass = setupObj.wlan0.client.pass ? setupObj.wlan0.client.pass : "VL" + _os2.default.hostname();
+    obj.wlan0.client.ssid = setupObj.wlan0.client.ssid ? setupObj.wlan0.client.ssid : "Pa$$w0rd";
+
+    obj.wlan0.mac = null;
+
+    obj.wlan0.server.address = setupObj.wlan0.server.address ? setupObj.wlan0.server.address : "10.10.10.1";
+    obj.wlan0.server.dhcpFirst = null;
+    obj.wlan0.server.dhcpLast = null;
+    obj.wlan0.server.dhcpLease = setupObj.wlan0.server.dhcpLease ? setupObj.wlan0.server.dhcpLease : "12h";
+    obj.wlan0.server.dhcpPoolSize = setupObj.wlan0.server.dhcpPoolSize ? setupObj.wlan0.server.dhcpPoolSize : 10;
+    obj.wlan0.server.subnet = null;
+    obj.wlan0.server.subnetMask = setupObj.wlan0.server.subnetMask ? setupObj.wlan0.server.subnetMask : "255.255.255.0";
+
+    var objKeys = Object.keys(obj);
+    objKeys.splice(objKeys.indexOf("static"), 1);
+    objKeys.forEach(function (elem) {
+      if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
+      if (!obj[elem].server.subnet) {
+        obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
+        obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2);
+        obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
+      }
+    });
+    /*
     obj.apConfig.address = apConfig.address ? apConfig.address : "192.168.254.0";
     obj.apConfig.subnetMask = apConfig.subnetMask ? apConfig.subnetMask : "255.255.255.0";
     obj.apConfig.subnet = getIfaceSubNet(obj.apConfig.address, obj.apConfig.subnetMask);
     obj.apConfig.mac = getIfaceMacAddress(obj.iface);
     obj.apConfig.dhcpPoolSize = apConfig.dhcpPoolSize ? apConfig.dhcpPoolSize : 10;
     obj.apConfig.dhcpLease = apConfig.dhcpLease ? apConfig.dhcpLease : "12h";
-    obj.apConfig.dhcpFirst = obj.apConfig.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 2);
-    obj.apConfig.dhcpLast = obj.apConfig.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 2 + obj.apConfig.dhcpPoolSize);
+    obj.apConfig.dhcpFirst = obj.apConfig.subnet.contains(ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10))
+      ? ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10)
+      : ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 2);
+    obj.apConfig.dhcpLast = obj.apConfig.subnet.contains(ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize))
+      ? ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize)
+      : ip.fromLong(ip.toLong(obj.apConfig.subnet.networkAddress) + 2 + obj.apConfig.dhcpPoolSize);
     obj.apConfig.wapChannel = apConfig.wapChannel ? apConfig.wapChannel : 6;
     obj.apConfig.wapBroadcast = apConfig.wapBroadcast ? apConfig.wapBroadcast : true;
-    obj.apConfig.wapSSID = apConfig.wapSSID ? apConfig.wapSSID : _os2.default.hostname().toUpperCase();
+    obj.apConfig.wapSSID = apConfig.wapSSID ? apConfig.wapSSID : os.hostname().toUpperCase();
     obj.apConfig.wapPASS = apConfig.wapPASS ? apConfig.wapPASS : "Pa$$w0rd";
-
-    obj.clientConfig.ssid = clientConfig.ssid ? clientConfig.ssid : null;
+     obj.clientConfig.ssid = clientConfig.ssid ? clientConfig.ssid : null;
     obj.clientConfig.pass = clientConfig.pass ? clientConfig.pass : null;
-
+    */
     // ! if obj.actingAsHotSpot === true then sends false to turn on hostspot
     // ! if obj.actingAsHotSpot === false then sends true to turn on client
-    toggleAP(!obj.actingAsHotSpot);
+    // toggleAP(!obj.actingAsHotSpot);
   };
 
   var publicAPI = {
     getCurrentState: obj,
-    initIface: initIface,
+    initNetwork: initNetwork,
     toggleAP: toggleAP
   };
 
   return publicAPI;
 }
 
-module.exports = Iface;
+module.exports = Network;
