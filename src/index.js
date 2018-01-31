@@ -107,6 +107,7 @@ function Network() {
     objKeys.splice(objKeys.indexOf("static"), 1);
 
     for (let i = 0; i < objKeys.length; i += 1) {
+      if (!obj[objKeys[i]].mac) obj[objKeys[i]].mac = await getIfaceMacAddress(objKeys[i]);
       console.log(objKeys[i], obj[objKeys[i]]);
     }
     // objKeys.forEach(elem => {
