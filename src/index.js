@@ -58,7 +58,7 @@ function Network() {
     }
   };
 
-  const initNetwork = (startAsHotspot, setupObj) => {
+  const initNetwork = async (startAsHotspot, setupObj) => {
     obj = Object.assign({}, setupObj);
 
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
@@ -106,21 +106,24 @@ function Network() {
     objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1);
     objKeys.splice(objKeys.indexOf("static"), 1);
 
-    objKeys.forEach(elem => {
-      if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
-      if (!obj[elem].server.subnet) {
-        obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
-        obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10))
-          ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10)
-          : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2);
-        obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(
-          ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
-        )
-          ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
-          : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
-      }
-      console.log(elem, obj[elem]);
-    });
+    for (let i = 0; i < objKeys.length; i += 1) {
+      console.log(objKeys[i], obj[objKeys[i]]);
+    }
+    // objKeys.forEach(elem => {
+    //   if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
+    //   if (!obj[elem].server.subnet) {
+    //     obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
+    //     obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10))
+    //       ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10)
+    //       : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2);
+    //     obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(
+    //       ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
+    //     )
+    //       ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
+    //       : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
+    //   }
+    //   console.log(elem, obj[elem]);
+    // });
     /*
     obj.apConfig.address = apConfig.address ? apConfig.address : "192.168.254.0";
     obj.apConfig.subnetMask = apConfig.subnetMask ? apConfig.subnetMask : "255.255.255.0";
