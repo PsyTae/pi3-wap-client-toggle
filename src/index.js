@@ -83,8 +83,9 @@ function Network() {
     obj.eth0.server.subnetMask =
       setupObj && setupObj.eth0 && setupObj.eth0.server && setupObj.eth0.server.subnetMask ? setupObj.eth0.server.subnetMask : "255.255.255.0";
 
-    obj.wlan0.client.pass = setupObj.wlan0.client.pass || `VL${os.hostname().toUpperCase()}`;
-    obj.wlan0.client.ssid = setupObj.wlan0.client.ssid || "Pa$$w0rd";
+    obj.wlan0.client.pass =
+      setupObj && setupObj.wlan0 && setupObj.wlan0.client && setupObj.wlan0.client.pass ? setupObj.wlan0.client.pass : `VL${os.hostname().toUpperCase()}`;
+    obj.wlan0.client.ssid = setupObj && setupObj.wlan0 && setupObj.wlan0.client && setupObj.wlan0.client.ssid ? setupObj.wlan0.client.ssid : "Pa$$w0rd";
 
     obj.wlan0.mac = null;
 
