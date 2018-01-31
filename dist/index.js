@@ -112,26 +112,18 @@ function Network() {
     obj.wlan0.server.subnetMask = setupObj && setupObj.wlan0 && setupObj.wlan0.server && setupObj.wlan0.server.subnetMask ? setupObj.wlan0.server.subnetMask : "255.255.255.0";
 
     var objKeys = Object.keys(obj);
-    console.log(objKeys);
+
     objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1);
     objKeys.splice(objKeys.indexOf("static"), 1);
-    console.log(objKeys);
+
     objKeys.forEach(function (elem) {
-      console.log(elem, obj[elem]);
-      /*
       if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
       if (!obj[elem].server.subnet) {
         obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
-        obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10))
-          ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10)
-          : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2);
-        obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(
-          ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
-        )
-          ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
-          : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
+        obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2);
+        obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
       }
-        */
+      console.log(elem, obj[elem]);
     });
     /*
     obj.apConfig.address = apConfig.address ? apConfig.address : "192.168.254.0";

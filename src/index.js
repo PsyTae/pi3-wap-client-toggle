@@ -102,13 +102,11 @@ function Network() {
       setupObj && setupObj.wlan0 && setupObj.wlan0.server && setupObj.wlan0.server.subnetMask ? setupObj.wlan0.server.subnetMask : "255.255.255.0";
 
     const objKeys = Object.keys(obj);
-    console.log(objKeys);
+
     objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1);
     objKeys.splice(objKeys.indexOf("static"), 1);
-    console.log(objKeys);
+
     objKeys.forEach(elem => {
-      console.log(elem, obj[elem]);
-      /*
       if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
       if (!obj[elem].server.subnet) {
         obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
@@ -121,7 +119,7 @@ function Network() {
           ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
           : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
       }
-        */
+      console.log(elem, obj[elem]);
     });
     /*
     obj.apConfig.address = apConfig.address ? apConfig.address : "192.168.254.0";
