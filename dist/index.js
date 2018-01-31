@@ -113,7 +113,7 @@ function Network() {
 
     var objKeys = Object.keys(obj);
     console.log(objKeys);
-    objKeys.splice(objKeys.indexOf("static"), 1);
+    objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1).splice(objKeys.indexOf("static"), 1);
     console.log(objKeys);
     objKeys.forEach(function (elem) {
       console.log(elem, obj[elem]);
