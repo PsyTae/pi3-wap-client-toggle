@@ -153,7 +153,7 @@ function NetSet() {
     obj.wlan0.server.subnet =
       netConfig && netConfig.wlan0 && netConfig.wlan0.server.subnet
         ? netConfig.wlan0.server.subnet
-        : getIfaceSubNet(objKeys.wlan0.server.address, objKeys.wlan0.server.subnetMask);
+        : getIfaceSubNet(obj.wlan0.server.address, obj.wlan0.server.subnetMask);
     obj.wlan0.server.dhcpFirst =
       netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpFirst
         ? netConfig.wlan0.server.dhcpFirst
