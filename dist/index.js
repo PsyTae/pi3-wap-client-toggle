@@ -96,10 +96,10 @@ function NetSet() {
     var configKeys = netConfig ? Object.keys(netConfig) : [];
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
 
-    objKeys.diff(configKeys).forEach(function (elem) {
+    configKeys.diff(objKeys).forEach(function (elem) {
       objKeys.push(elem);
       obj[elem] = elem === "static" ? netConfig[elem] : {};
-      if (elem !== "static") obj[elem].mac = netConfig[elem].mac ? netConfig[elem].mac : null;
+      if (elem !== "static") obj[elem].mac = netConfig[elem].mac ? netConfig[elem].mac : getIfaceMacAddress(elem);
       if (netConfig[elem].server) {
         obj[elem].server = {};
         obj[elem].server.address = netConfig[elem].server.address ? netConfig[elem].server.address : "10.255.255.255";
