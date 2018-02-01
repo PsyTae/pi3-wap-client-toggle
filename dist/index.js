@@ -134,16 +134,35 @@ function Iface() {
   var initNetwork = function initNetwork(startAsHotspot, netConfig) {
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
 
-    obj.eth0 = netConfig && netConfig.eth0 || {};
-    obj.static = netConfig && netConfig.static || [];
-    obj.wlan0 = netConfig && netConfig.wlan0 || {};
+    obj.eth0 = netConfig && netConfig.eth0 ? netConfig.eth0 : {};
+    obj.static = netConfig && netConfig.static ? netConfig.static : [];
+    obj.wlan0 = netConfig && netConfig.wlan0 ? netConfig.wlan0 : {};
 
-    obj.eth0.server = netConfig && netConfig.eth0 && netConfig.eth0.server || {};
-    obj.wlan0.client = netConfig && netConfig.wlan0 && netConfig.wlan0.client || {};
-    obj.wlan0.server = netConfig && netConfig.wlan0 && netConfig.wlan0.server || {};
+    obj.eth0.server = netConfig && netConfig.eth0 && netConfig.eth0.server ? netConfig.eth0.server : {};
+    obj.wlan0.client = netConfig && netConfig.wlan0 && netConfig.wlan0.client ? netConfig.wlan0.client : {};
+    obj.wlan0.server = netConfig && netConfig.wlan0 && netConfig.wlan0.server ? netConfig.wlan0.server : {};
 
-    obj.eth0.mac = netConfig && netConfig.eth0 && netConfig.eth0.mac || null;
-    obj.wlan0.mac = netConfig && netConfig.wlan0 && netConfig.wlan0.mac || null;
+    obj.eth0.mac = netConfig && netConfig.eth0 && netConfig.eth0.mac ? netConfig.eth0.mac : null;
+    obj.wlan0.mac = netConfig && netConfig.wlan0 && netConfig.wlan0.mac ? netConfig.wlan0.mac : null;
+
+    obj.eth0.server.address = netConfig && netConfig.eth0 && netConfig.eth0.server.address ? netConfig.eth0.server.address : "10.0.0.1";
+    obj.eth0.server.dhcpFirst = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpFirst ? netConfig.eth0.server.dhcpFirst : null;
+    obj.eth0.server.dhcpLast = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpLast ? netConfig.eth0.server.dhcpLast : null;
+    obj.eth0.server.dhcpLease = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpLease ? netConfig.eth0.server.dhcpLease : "12h";
+    obj.eth0.server.dhcpPoolSize = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpPoolSize ? netConfig.eth0.server.dhcpPoolSize : 10;
+    obj.eth0.server.subnet = netConfig && netConfig.eth0 && netConfig.eth0.server.subnet ? netConfig.eth0.server.subnet : null;
+    obj.eth0.server.subnetMask = netConfig && netConfig.eth0 && netConfig.eth0.server.subnetMask ? netConfig.eth0.server.subnetMask : "255.255.255.0";
+
+    obj.wlan0.client.pass = netConfig && netConfig.wlan0 && netConfig.wlan0.client.pass ? netConfig.wlan0.client.pass : "Pa$$w0rd";
+    obj.wlan0.client.ssid = netConfig && netConfig.wlan0 && netConfig.wlan0.client.ssid ? netConfig.wlan0.client.ssid : "VL" + _os2.default.hostname().toUpperCase();
+
+    obj.wlan0.server.address = netConfig && netConfig.wlan0 && netConfig.wlan0.server.address ? netConfig.wlan0.server.address : "10.0.0.1";
+    obj.wlan0.server.dhcpFirst = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpFirst ? netConfig.wlan0.server.dhcpFirst : null;
+    obj.wlan0.server.dhcpLast = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpLast ? netConfig.wlan0.server.dhcpLast : null;
+    obj.wlan0.server.dhcpLease = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpLease ? netConfig.wlan0.server.dhcpLease : "12h";
+    obj.wlan0.server.dhcpPoolSize = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpPoolSize ? netConfig.wlan0.server.dhcpPoolSize : 10;
+    obj.wlan0.server.subnet = netConfig && netConfig.wlan0 && netConfig.wlan0.server.subnet ? netConfig.wlan0.server.subnet : null;
+    obj.wlan0.server.subnetMask = netConfig && netConfig.wlan0 && netConfig.wlan0.server.subnetMask ? netConfig.wlan0.server.subnetMask : "255.255.255.0";
   };
 
   var publicAPI = {
