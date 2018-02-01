@@ -133,6 +133,18 @@ function Iface() {
    */
   var initNetwork = function initNetwork(startAsHotspot, netConfig) {
     obj = Object.assign({}, obj, netConfig);
+    obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
+
+    obj.eth0 = obj.eth0 || {};
+    obj.static = obj.static || [];
+    obj.wlan0 = obj.wlan0 || {};
+
+    obj.eth0.server = obj.eth0.server || {};
+    obj.wlan0.client = obj.wlan0.client || {};
+    obj.wlan0.server = obj.wlan0.server || {};
+
+    obj.eth0.mac = obj.eth0.mac || null;
+    obj.wlan0.mac = obj.wlan0.mac || null;
   };
 
   var publicAPI = {
