@@ -64,26 +64,26 @@ function NetSet() {
     });
   };
 
-  var toggleAP = function toggleAP(state) {
+  var setStates = function setStates(states) {
+    console.log(states);
     // obj.actingAsHotSpot = !state;
-
-    if (state) {
-      // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
-      // todo: check files to see if services need to be stopped and files need to be reconfigured
-      // todo: backup files if originals are not already saved
-      // todo: stop services
-      // todo: setup files for hostapd, and dnsmasq
-      // todo: start services
-      // todo: set obj.actingAsHotSpot = true
-    } else {
-        // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
-        // todo: check files to see if services need to be stopped and files need to be reconfigured
-        // todo: backup files if originals are not already saved
-        // todo: stop services
-        // todo: setup files to connect to wifi
-        // todo: start services
-        // todo: set obj.actingAsHotSpot = false
-      }
+    // if (state) {
+    // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
+    // todo: check files to see if services need to be stopped and files need to be reconfigured
+    // todo: backup files if originals are not already saved
+    // todo: stop services
+    // todo: setup files for hostapd, and dnsmasq
+    // todo: start services
+    // todo: set obj.actingAsHotSpot = true
+    // } else {
+    // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
+    // todo: check files to see if services need to be stopped and files need to be reconfigured
+    // todo: backup files if originals are not already saved
+    // todo: stop services
+    // todo: setup files to connect to wifi
+    // todo: start services
+    // todo: set obj.actingAsHotSpot = false
+    // }
   };
 
   /**
@@ -147,12 +147,14 @@ function NetSet() {
     obj.wlan0.server.subnet = netConfig && netConfig.wlan0 && netConfig.wlan0.server.subnet ? netConfig.wlan0.server.subnet : getIfaceSubNet(obj.wlan0.server.address, obj.wlan0.server.subnetMask);
     obj.wlan0.server.dhcpFirst = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpFirst ? netConfig.wlan0.server.dhcpFirst : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2);
     obj.wlan0.server.dhcpLast = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpLast ? netConfig.wlan0.server.dhcpLast : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
+
+    setStates({ eth0: "server", wlan0: "server", wlan1: "client" });
   };
 
   var publicAPI = {
     getCurrentState: obj,
     initNetwork: initNetwork,
-    toggleAP: toggleAP
+    setStates: setStates
   };
 
   return publicAPI;
