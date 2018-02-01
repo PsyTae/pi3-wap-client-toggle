@@ -17,13 +17,7 @@ var _util = require("util");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
- * @typedef {Object} clientConfig
- * @property {string} ssid - SSID to look for and connect to
- * @property {string} pass - password for WIFI Connection
- */
-
-/**
- * @typedef {Object} apConfig
+ * @typedef {Object} netConfig
  * @property {string} [address="192.168.254.0"] - Network IP Address for Access Point to use
  * @property {string} [subnetMask="255.255.255.0"] - Subnet Mask for Access Point to use
  * @property {number} [dhcpPoolSize=25] - Number of DHCP Clients that the Access Point will handle
@@ -37,7 +31,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // npm i -D babel-cli babel-preset-env
 /* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }] */
 
-function Iface() {
+function NetSet() {
   var obj = {};
 
   var getIfaceMacAddress = function getIfaceMacAddress(iface) {
@@ -93,42 +87,9 @@ function Iface() {
   };
 
   /**
-   * Initialize Interface
-   * @param {string} [iface="wlan1"] - interface name such as wlan0
+   * Initialize Network
    * @param {boolean} [startAsHotspot=true] - Whether or not to start as hotspot or client
-   * @param {clientConfig} clientConfig - Object used to Connect to Outside Network
-   * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
-   */
-  var initIface = function initIface(iface, startAsHotspot, clientConfig, apConfig) {
-    obj.iface = iface ? iface.toLowerCase() : "wlan0";
-    obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
-    obj.clientConfig = {};
-    obj.apConfig = {};
-    obj.apConfig.address = apConfig.address ? apConfig.address : "192.168.254.0";
-    obj.apConfig.subnetMask = apConfig.subnetMask ? apConfig.subnetMask : "255.255.255.0";
-    obj.apConfig.subnet = getIfaceSubNet(obj.apConfig.address, obj.apConfig.subnetMask);
-    obj.apConfig.mac = getIfaceMacAddress(obj.iface);
-    obj.apConfig.dhcpPoolSize = apConfig.dhcpPoolSize ? apConfig.dhcpPoolSize : 10;
-    obj.apConfig.dhcpLease = apConfig.dhcpLease ? apConfig.dhcpLease : "12h";
-    obj.apConfig.dhcpFirst = obj.apConfig.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 2);
-    obj.apConfig.dhcpLast = obj.apConfig.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 10 + obj.apConfig.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.apConfig.subnet.networkAddress) + 2 + obj.apConfig.dhcpPoolSize);
-    obj.apConfig.wapChannel = apConfig.wapChannel ? apConfig.wapChannel : 6;
-    obj.apConfig.wapBroadcast = apConfig.wapBroadcast ? apConfig.wapBroadcast : true;
-    obj.apConfig.wapSSID = apConfig.wapSSID ? apConfig.wapSSID : _os2.default.hostname().toUpperCase();
-    obj.apConfig.wapPASS = apConfig.wapPASS ? apConfig.wapPASS : "Pa$$w0rd";
-
-    obj.clientConfig.ssid = clientConfig.ssid ? clientConfig.ssid : null;
-    obj.clientConfig.pass = clientConfig.pass ? clientConfig.pass : null;
-
-    // ! if obj.actingAsHotSpot === true then sends false to turn on hostspot
-    // ! if obj.actingAsHotSpot === false then sends true to turn on client
-    toggleAP(!obj.actingAsHotSpot);
-  };
-
-  /**
-   * Initialize NEtwork
-   * @param {boolean} [startAsHotspot=true] - Whether or not to start as hotspot or client
-   * @param {clientConfig} clientConfig - Object used to Connect to Outside Network
+   * @param {netConfig} clientConfig - Object used to Connect to Outside Network
    * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
    */
   var initNetwork = function initNetwork(startAsHotspot, netConfig) {
@@ -180,7 +141,6 @@ function Iface() {
 
   var publicAPI = {
     getCurrentState: obj,
-    initIface: initIface,
     initNetwork: initNetwork,
     toggleAP: toggleAP
   };
@@ -188,4 +148,4 @@ function Iface() {
   return publicAPI;
 }
 
-module.exports = Iface;
+module.exports = NetSet;
