@@ -31,6 +31,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // npm i -D babel-cli babel-preset-env
 /* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0 */
 
+var execFilePromise = (0, _util.promisify)(_child_process2.default.execFile);
+
 function NetSet() {
   var obj = {};
 
@@ -42,30 +44,27 @@ function NetSet() {
     return _ip2.default.subnet(ipAddress, subnet);
   };
 
-  var execFilePromise = (0, _util.promisify)(_child_process2.default.execFile);
+  var stopServices = function stopServices() {
+    return new Promise(function (stopResolve, stopReject) {
+      execFilePromise("systemctl", ["stop", "hostapd"]).then(execFilePromise("systemctl", ["stop", "dnsmasq"])).then(function () {
+        return stopResolve();
+      }).catch(function (error) {
+        return stopReject(error);
+      });
+    });
+  };
 
-  /*
-  const getIfaceMacAddress = iface =>
-    child
-      .execFileSync("cat", [`/sys/class/net/${iface}/address`])
-      .toString()
-      .trim();
-   const getIfaceSubNet = (ipAddress, subnet) => ip.subnet(ipAddress, subnet);
-   const stopServices = () =>
-    new Promise((stopResolve, stopReject) => {
-      execFilePromise("systemctl", ["stop", "hostapd"])
-        .then(execFilePromise("systemctl", ["stop", "dnsmasq"]))
-        .then(() => stopResolve())
-        .catch(error => stopReject(error));
+  var startServices = function startServices() {
+    return new Promise(function (startResolve, startReject) {
+      execFilePromise("systemctl", ["start", "dnsmasq"]).then(execFilePromise("systemctl", ["start", "hostapd"])).then(function () {
+        return startResolve();
+      }).catch(function (error) {
+        return startReject(error);
+      });
     });
-   const startServices = () =>
-    new Promise((startResolve, startReject) => {
-      execFilePromise("systemctl", ["start", "dnsmasq"])
-        .then(execFilePromise("systemctl", ["start", "hostapd"]))
-        .then(() => startResolve())
-        .catch(error => startReject(error));
-    });
-   const toggleAP = state => {
+  };
+
+  var toggleAP = function toggleAP(state) {
     // obj.actingAsHotSpot = !state;
 
     if (state) {
@@ -77,73 +76,20 @@ function NetSet() {
       // todo: start services
       // todo: set obj.actingAsHotSpot = true
     } else {
-      // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
-      // todo: check files to see if services need to be stopped and files need to be reconfigured
-      // todo: backup files if originals are not already saved
-      // todo: stop services
-      // todo: setup files to connect to wifi
-      // todo: start services
-      // todo: set obj.actingAsHotSpot = false
-    }
+        // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
+        // todo: check files to see if services need to be stopped and files need to be reconfigured
+        // todo: backup files if originals are not already saved
+        // todo: stop services
+        // todo: setup files to connect to wifi
+        // todo: start services
+        // todo: set obj.actingAsHotSpot = false
+      }
   };
-   const initNetwork = async (startAsHotspot, setupObj) => {
-    obj = setupObj || obj;
-     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
-     obj.eth0 = obj.eth0 || {};
-    obj.static = obj.static || [];
-    obj.wlan0 = obj.wlan0 || {};
-     obj.eth0.server = obj.eth0.server || {};
-    obj.wlan0.client = obj.wlan0.client || {};
-    obj.wlan0.server = obj.wlan0.server || {};
-     obj.eth0.mac = null;
-     obj.eth0.server.address = setupObj && setupObj.eth0 && setupObj.eth0.server && setupObj.eth0.server.address ? setupObj.eth0.server.address : "10.0.0.1";
-    obj.eth0.server.dhcpFirst = null;
-    obj.eth0.server.dhcpLast = null;
-    obj.eth0.server.dhcpLease = setupObj && setupObj.eth0 && setupObj.eth0.server && setupObj.eth0.server.dhcpLease ? setupObj.eth0.server.dhcpLease : "12h";
-    obj.eth0.server.dhcpPoolSize =
-      setupObj && setupObj.eth0 && setupObj.eth0.server && setupObj.eth0.server.dhcpPoolSize ? setupObj.eth0.server.dhcpPoolSize : 10;
-    obj.eth0.server.subnet = null;
-    obj.eth0.server.subnetMask =
-      setupObj && setupObj.eth0 && setupObj.eth0.server && setupObj.eth0.server.subnetMask ? setupObj.eth0.server.subnetMask : "255.255.255.0";
-     obj.wlan0.client.pass =
-      setupObj && setupObj.wlan0 && setupObj.wlan0.client && setupObj.wlan0.client.pass ? setupObj.wlan0.client.pass : `VL${os.hostname().toUpperCase()}`;
-    obj.wlan0.client.ssid = setupObj && setupObj.wlan0 && setupObj.wlan0.client && setupObj.wlan0.client.ssid ? setupObj.wlan0.client.ssid : "Pa$$w0rd";
-     obj.wlan0.mac = null;
-     obj.wlan0.server.address =
-      setupObj && setupObj.wlan0 && setupObj.wlan0.server && setupObj.wlan0.server.address ? setupObj.wlan0.server.address : "10.10.10.1";
-    obj.wlan0.server.dhcpFirst = null;
-    obj.wlan0.server.dhcpLast = null;
-    obj.wlan0.server.dhcpLease =
-      setupObj && setupObj.wlan0 && setupObj.wlan0.server && setupObj.wlan0.server.dhcpLease ? setupObj.wlan0.server.dhcpLease : "12h";
-    obj.wlan0.server.dhcpPoolSize =
-      setupObj && setupObj.wlan0 && setupObj.wlan0.server && setupObj.wlan0.server.dhcpPoolSize ? setupObj.wlan0.server.dhcpPoolSize : 10;
-    obj.wlan0.server.subnet = null;
-    obj.wlan0.server.subnetMask =
-      setupObj && setupObj.wlan0 && setupObj.wlan0.server && setupObj.wlan0.server.subnetMask ? setupObj.wlan0.server.subnetMask : "255.255.255.0";
-     // const objKeys = Object.keys(obj);
-     // objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1);
-    // objKeys.splice(objKeys.indexOf("static"), 1);
-     // objKeys.forEach(elem => {
-    //   if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
-    //   if (!obj[elem].server.subnet) {
-    //     obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
-    //   }
-    //   obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10))
-    //     ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10)
-    //     : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2);
-    //   obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(
-    //     ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
-    //   )
-    //     ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
-    //     : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
-    // });
-  }; */
 
   /**
    * Initialize Network
    * @param {boolean} [startAsHotspot=true] - Whether or not to start as hotspot or client
-   * @param {netConfig} clientConfig - Object used to Connect to Outside Network
-   * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
+   * @param {netConfig} netConfig - Object used to store all connection info for network setup
    */
   var initNetwork = function initNetwork(startAsHotspot, netConfig) {
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
@@ -199,6 +145,6 @@ function NetSet() {
   };
 
   return publicAPI;
-};
+}
 
 module.exports = NetSet;
