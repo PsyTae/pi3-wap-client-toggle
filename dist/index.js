@@ -132,19 +132,18 @@ function Iface() {
    * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
    */
   var initNetwork = function initNetwork(startAsHotspot, netConfig) {
-    obj = netConfig;
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
 
-    obj.eth0 = obj.eth0 || {};
-    obj.static = obj.static || [];
-    obj.wlan0 = obj.wlan0 || {};
+    obj.eth0 = netConfig && netConfig.eth0 || {};
+    obj.static = netConfig && netConfig.static || [];
+    obj.wlan0 = netConfig && netConfig.wlan0 || {};
 
-    obj.eth0.server = obj.eth0.server || {};
-    obj.wlan0.client = obj.wlan0.client || {};
-    obj.wlan0.server = obj.wlan0.server || {};
+    obj.eth0.server = netConfig && netConfig.eth0 && netConfig.eth0.server || {};
+    obj.wlan0.client = netConfig && netConfig.wlan0 && netConfig.wlan0.client || {};
+    obj.wlan0.server = netConfig && netConfig.wlan0 && netConfig.wlan0.server || {};
 
-    obj.eth0.mac = obj.eth0.mac || null;
-    obj.wlan0.mac = obj.wlan0.mac || null;
+    obj.eth0.mac = netConfig && netConfig.eth0 && netConfig.eth0.mac || null;
+    obj.wlan0.mac = netConfig && netConfig.wlan0 && netConfig.wlan0.mac || null;
   };
 
   var publicAPI = {
