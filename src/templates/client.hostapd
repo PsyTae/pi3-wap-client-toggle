@@ -1,0 +1,4 @@
+# found at /etc/default/hostapd
+#
+DAEMON_CONF=""
+DAEMON_OPTS=""
