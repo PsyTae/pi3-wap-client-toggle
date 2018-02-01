@@ -17,15 +17,36 @@ var _util = require("util");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
+ * Object to initialize our available network interfaces with
  * @typedef {Object} netConfig
- * @property {string} [address="192.168.254.0"] - Network IP Address for Access Point to use
- * @property {string} [subnetMask="255.255.255.0"] - Subnet Mask for Access Point to use
- * @property {number} [dhcpPoolSize=25] - Number of DHCP Clients that the Access Point will handle
- * @property {string} [dhcpLease="12h"] - string representing how long the lease will be 123 = 123 seconds, 45m = 45 minutes, 12h = 12 hours, infinite = no expiration(not recomended)
- * @property {string} [wapSSID="[HOSTNAME]"] - SSID to allow clients to connect to
- * @property {string} [wapPASS="Pa$$w0rd"] - password to use to connect to SSID
- * @property {boolean} [wapBroadcast=true] - Channel WAP will radiate on
- * @property {number} [wapChannel=6] - Channel WAP will radiate on
+ * @property {boolean} [actingAsHotSpot=true] - Whether to start WLAN0 as a hotspot or not.
+ * @property {static[]} [static=[]] - array of network devices that need to have a static ip address reserved for them, defaults to empty array
+ * @property {...interface} [interface] - eth0, wlan0, wlan1, will contain client/server object, or both for the interface in question
+ */
+
+/**
+ * @typedef {Object} static
+ * @property {string} mac - mac address of network device needing a reserved IP address
+ * @property {string} ipAddress - ip address to be reserved for network device
+ * @property {string} name - name to give to device in dns
+ */
+
+/**
+ * eth0, wlan0, wlan1: will contain client/server object, or both for the interface in question
+ * @typedef {Object} interface
+ * @property {client[]} client - Object with Client Properties for the Interface
+ * @property {server} server - Object with Server Properties for the Interface
+ */
+
+/**
+ * @typedef {Object} client
+ * @property {string} name - Nickname to give the wireless Access Point Connection
+ * @property {string} pass - Passphase to use to connect to a Wireless Access Point
+ * @property {string} ssid - SSID to use to connect to a Wireless Access Point
+ */
+
+/**
+ * @typedef {Object} server
  */
 
 // npm i -D babel-cli babel-preset-env
@@ -96,13 +117,13 @@ function NetSet() {
     var states = {};
     var objKeys = Object.keys(obj);
     var configKeys = netConfig ? Object.keys(netConfig) : [];
-    obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
+    obj.actingAsHotSpot = !!startAsHotspot;
 
     // hanldes anything other than eth0 and wlan0
     configKeys.diff(objKeys).forEach(function (elem) {
-      objKeys.push(elem);
       obj[elem] = elem === "static" ? netConfig[elem] : {};
       if (elem !== "static") obj[elem].mac = netConfig[elem].mac ? netConfig[elem].mac : getIfaceMacAddress(elem);
+
       if (netConfig[elem].server) {
         states[elem] = "server";
         obj[elem].server = {};
@@ -114,47 +135,52 @@ function NetSet() {
         obj[elem].server.dhcpFirst = netConfig[elem].server.dhcpFirst ? netConfig[elem].server.dhcpFirst : obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2);
         obj[elem].server.dhcpLast = netConfig[elem].server.dhcpLast ? netConfig[elem].server.dhcpLast : obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
       }
-      if (netConfig[elem].client) {
-        states[elem] = "client";
-        obj[elem].client = {};
-        obj[elem].client.pass = netConfig[elem].client.pass ? netConfig[elem].client.pass : "Pa$$w0rd";
-        obj[elem].client.ssid = netConfig[elem].client.ssid ? netConfig[elem].client.ssid : "VL" + _os2.default.hostname().toUpperCase();
+      if (netConfig[elem].clients) {
+        states[elem] = "clients";
+        obj[elem].clients = [];
+        netConfig[elem].clients.forEach(function (connection) {
+          if (connection.name && connection.pass && connection.ssid) obj[elem].clients.push(connection);
+        });
       }
-      if (netConfig[elem].server && netConfig[elem].client) states[elem] = "client";
+      if (netConfig[elem].server && netConfig[elem].clients) states[elem] = "clients";
     });
 
     states.eth0 = "server";
-    states.wlan0 = obj.actingAsHotSpot ? "server" : "client";
+    states.wlan0 = obj.actingAsHotSpot ? "server" : "clients";
 
-    obj.eth0 = netConfig && netConfig.eth0 ? netConfig.eth0 : {};
-    obj.static = netConfig && netConfig.static ? netConfig.static : [];
-    obj.wlan0 = netConfig && netConfig.wlan0 ? netConfig.wlan0 : {};
+    if (!obj.eth0) obj.eth0 = netConfig && netConfig.eth0 ? netConfig.eth0 : {};
+    if (!obj.static) obj.static = netConfig && netConfig.static ? netConfig.static : [];
+    if (!obj.wlan0) obj.wlan0 = netConfig && netConfig.wlan0 ? netConfig.wlan0 : {};
 
-    obj.eth0.server = netConfig && netConfig.eth0 && netConfig.eth0.server ? netConfig.eth0.server : {};
-    obj.wlan0.client = netConfig && netConfig.wlan0 && netConfig.wlan0.client ? netConfig.wlan0.client : {};
-    obj.wlan0.server = netConfig && netConfig.wlan0 && netConfig.wlan0.server ? netConfig.wlan0.server : {};
+    if (!obj.eth0.server) obj.eth0.server = netConfig && netConfig.eth0 && netConfig.eth0.server ? netConfig.eth0.server : {};
+    if (!obj.wlan0.clients) obj.wlan0.clients = netConfig && netConfig.wlan0 && netConfig.wlan0.clients && obj.wlan0.clients.length === 0 ? netConfig.wlan0.clients : [];
+    if (!obj.wlan0.server) obj.wlan0.server = netConfig && netConfig.wlan0 && netConfig.wlan0.server ? netConfig.wlan0.server : {};
 
-    obj.eth0.mac = netConfig && netConfig.eth0 && netConfig.eth0.mac ? netConfig.eth0.mac : getIfaceMacAddress("eth0");
-    obj.wlan0.mac = netConfig && netConfig.wlan0 && netConfig.wlan0.mac ? netConfig.wlan0.mac : getIfaceMacAddress("wlan0");
+    if (!obj.eth0.mac) obj.eth0.mac = netConfig && netConfig.eth0 && netConfig.eth0.mac ? netConfig.eth0.mac : getIfaceMacAddress("eth0");
+    if (!obj.wlan0.mac) obj.wlan0.mac = netConfig && netConfig.wlan0 && netConfig.wlan0.mac ? netConfig.wlan0.mac : getIfaceMacAddress("wlan0");
 
-    obj.eth0.server.address = netConfig && netConfig.eth0 && netConfig.eth0.server.address ? netConfig.eth0.server.address : "10.0.0.1";
-    obj.eth0.server.dhcpLease = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpLease ? netConfig.eth0.server.dhcpLease : "12h";
-    obj.eth0.server.dhcpPoolSize = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpPoolSize ? netConfig.eth0.server.dhcpPoolSize : 10;
-    obj.eth0.server.subnetMask = netConfig && netConfig.eth0 && netConfig.eth0.server.subnetMask ? netConfig.eth0.server.subnetMask : "255.255.255.0";
-    obj.eth0.server.subnet = netConfig && netConfig.eth0 && netConfig.eth0.server.subnet ? netConfig.eth0.server.subnet : getIfaceSubNet(obj.eth0.server.address, obj.eth0.server.subnetMask);
-    obj.eth0.server.dhcpFirst = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpFirst ? netConfig.eth0.server.dhcpFirst : obj.eth0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 2);
-    obj.eth0.server.dhcpLast = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpLast ? netConfig.eth0.server.dhcpLast : obj.eth0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10 + obj.eth0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10 + obj.eth0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 2 + obj.eth0.server.dhcpPoolSize);
+    if (!obj.eth0.server.address) obj.eth0.server.address = netConfig && netConfig.eth0 && netConfig.eth0.server.address ? netConfig.eth0.server.address : "10.0.0.1";
+    if (!obj.eth0.server.dhcpLease) obj.eth0.server.dhcpLease = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpLease ? netConfig.eth0.server.dhcpLease : "12h";
+    if (!obj.eth0.server.dhcpPoolSize) obj.eth0.server.dhcpPoolSize = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpPoolSize ? netConfig.eth0.server.dhcpPoolSize : 10;
+    if (!obj.eth0.server.subnetMask) obj.eth0.server.subnetMask = netConfig && netConfig.eth0 && netConfig.eth0.server.subnetMask ? netConfig.eth0.server.subnetMask : "255.255.255.0";
+    if (!obj.eth0.server.subnet) obj.eth0.server.subnet = netConfig && netConfig.eth0 && netConfig.eth0.server.subnet ? netConfig.eth0.server.subnet : getIfaceSubNet(obj.eth0.server.address, obj.eth0.server.subnetMask);
+    if (!obj.eth0.server.dhcpFirst) obj.eth0.server.dhcpFirst = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpFirst ? netConfig.eth0.server.dhcpFirst : obj.eth0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 2);
+    if (!obj.eth0.server.dhcpLast) obj.eth0.server.dhcpLast = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpLast ? netConfig.eth0.server.dhcpLast : obj.eth0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10 + obj.eth0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10 + obj.eth0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 2 + obj.eth0.server.dhcpPoolSize);
 
-    obj.wlan0.client.pass = netConfig && netConfig.wlan0 && netConfig.wlan0.client.pass ? netConfig.wlan0.client.pass : "Pa$$w0rd";
-    obj.wlan0.client.ssid = netConfig && netConfig.wlan0 && netConfig.wlan0.client.ssid ? netConfig.wlan0.client.ssid : "VL" + _os2.default.hostname().toUpperCase();
+    if (!obj.wlan0.server.apInfo) obj.wlan0.server.apInfo = {};
+    if (!obj.wlan0.server.apInfo.pass) obj.wlan0.server.apInfo.pass = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.pass ? netConfig.wlan0.server.apInfo.pass : "Pa$$w0rd";
+    if (!obj.wlan0.server.apInfo.ssid) obj.wlan0.server.apInfo.ssid = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.ssid ? netConfig.wlan0.server.apInfo.ssid : "VL" + _os2.default.hostname().toUpperCase();
 
-    obj.wlan0.server.address = netConfig && netConfig.wlan0 && netConfig.wlan0.server.address ? netConfig.wlan0.server.address : "10.10.10.1";
-    obj.wlan0.server.dhcpLease = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpLease ? netConfig.wlan0.server.dhcpLease : "12h";
-    obj.wlan0.server.dhcpPoolSize = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpPoolSize ? netConfig.wlan0.server.dhcpPoolSize : 10;
-    obj.wlan0.server.subnetMask = netConfig && netConfig.wlan0 && netConfig.wlan0.server.subnetMask ? netConfig.wlan0.server.subnetMask : "255.255.255.0";
-    obj.wlan0.server.subnet = netConfig && netConfig.wlan0 && netConfig.wlan0.server.subnet ? netConfig.wlan0.server.subnet : getIfaceSubNet(obj.wlan0.server.address, obj.wlan0.server.subnetMask);
-    obj.wlan0.server.dhcpFirst = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpFirst ? netConfig.wlan0.server.dhcpFirst : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2);
-    obj.wlan0.server.dhcpLast = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpLast ? netConfig.wlan0.server.dhcpLast : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
+    if (!obj.wlan0.server.address) obj.wlan0.server.address = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.address ? netConfig.wlan0.server.address : "10.10.10.1";
+    if (!obj.wlan0.server.dhcpLease) obj.wlan0.server.dhcpLease = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpLease ? netConfig.wlan0.server.dhcpLease : "12h";
+    if (!obj.wlan0.server.dhcpPoolSize) obj.wlan0.server.dhcpPoolSize = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpPoolSize ? netConfig.wlan0.server.dhcpPoolSize : 10;
+    if (!obj.wlan0.server.subnetMask) obj.wlan0.server.subnetMask = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.subnetMask ? netConfig.wlan0.server.subnetMask : "255.255.255.0";
+
+    if (!obj.wlan0.server.subnet) obj.wlan0.server.subnet = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.subnet ? netConfig.wlan0.server.subnet : getIfaceSubNet(obj.wlan0.server.address, obj.wlan0.server.subnetMask);
+
+    if (!obj.wlan0.server.dhcpFirst) obj.wlan0.server.dhcpFirst = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpFirst ? netConfig.wlan0.server.dhcpFirst : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2);
+
+    if (!obj.wlan0.server.dhcpLast) obj.wlan0.server.dhcpLast = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpLast ? netConfig.wlan0.server.dhcpLast : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
 
     setStates(states);
   };
