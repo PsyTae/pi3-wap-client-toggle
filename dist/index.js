@@ -163,6 +163,10 @@ function Iface() {
     obj.wlan0.server.dhcpPoolSize = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpPoolSize ? netConfig.wlan0.server.dhcpPoolSize : 10;
     obj.wlan0.server.subnet = netConfig && netConfig.wlan0 && netConfig.wlan0.server.subnet ? netConfig.wlan0.server.subnet : null;
     obj.wlan0.server.subnetMask = netConfig && netConfig.wlan0 && netConfig.wlan0.server.subnetMask ? netConfig.wlan0.server.subnetMask : "255.255.255.0";
+
+    var objKeys = Object.keys(obj);
+    objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1);
+    objKeys.splice(objKeys.indexOf("static"), 1);
   };
 
   var publicAPI = {
