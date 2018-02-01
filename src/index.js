@@ -56,8 +56,7 @@ function Iface() {
   const toggleAP = state => {
     // obj.actingAsHotSpot = !state;
 
-    startServices();
-    if (!obj.actingAsHotSpot) {
+    if (state) {
       // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
       // todo: check files to see if services need to be stopped and files need to be reconfigured
       // todo: backup files if originals are not already saved
