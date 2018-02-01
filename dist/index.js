@@ -1,5 +1,9 @@
 "use strict";
 
+var _async = require("async");
+
+var _async2 = _interopRequireDefault(_async);
+
 var _child_process = require("child_process");
 
 var _child_process2 = _interopRequireDefault(_child_process);
@@ -77,12 +81,11 @@ var Network = function Network() {
 
   var initNetwork = function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(startAsHotspot, setupObj) {
-      var objKeys;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              obj = Object.assign({}, setupObj);
+              obj = setupObj;
 
               obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
 
@@ -117,25 +120,27 @@ var Network = function Network() {
               obj.wlan0.server.subnet = null;
               obj.wlan0.server.subnetMask = setupObj && setupObj.wlan0 && setupObj.wlan0.server && setupObj.wlan0.server.subnetMask ? setupObj.wlan0.server.subnetMask : "255.255.255.0";
 
-              objKeys = Object.keys(obj);
+              // const objKeys = Object.keys(obj);
 
+              // objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1);
+              // objKeys.splice(objKeys.indexOf("static"), 1);
 
-              objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1);
-              objKeys.splice(objKeys.indexOf("static"), 1);
+              // objKeys.forEach(elem => {
+              //   if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
+              //   if (!obj[elem].server.subnet) {
+              //     obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
+              //   }
+              //   obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10))
+              //     ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10)
+              //     : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2);
+              //   obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(
+              //     ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
+              //   )
+              //     ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
+              //     : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
+              // });
 
-              objKeys.forEach(function (elem) {
-                if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
-                if (!obj[elem].server.subnet) {
-                  obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
-                }
-                obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2);
-                obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
-              });
-              // ! if obj.actingAsHotSpot === true then sends false to turn on hostspot
-              // ! if obj.actingAsHotSpot === false then sends true to turn on client
-              toggleAP(!obj.actingAsHotSpot);
-
-            case 31:
+            case 26:
             case "end":
               return _context.stop();
           }
