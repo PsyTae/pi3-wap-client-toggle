@@ -130,6 +130,8 @@ function NetSet() {
   return publicAPI;
 }
 
-Array.prototype.diff = a => this.filter(i => a.indexOf(i) < 0);
+Array.prototype.diff = function(a) {
+  return this.filter(i => a.indexOf(i) < 0);
+};
 
 module.exports = NetSet;

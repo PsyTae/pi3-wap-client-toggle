@@ -142,7 +142,7 @@ function NetSet() {
 }
 
 Array.prototype.diff = function (a) {
-  return undefined.filter(function (i) {
+  return this.filter(function (i) {
     return a.indexOf(i) < 0;
   });
 };
