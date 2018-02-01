@@ -125,9 +125,20 @@ function Iface() {
     toggleAP(!obj.actingAsHotSpot);
   };
 
+  /**
+   * Initialize NEtwork
+   * @param {boolean} [startAsHotspot=true] - Whether or not to start as hotspot or client
+   * @param {clientConfig} clientConfig - Object used to Connect to Outside Network
+   * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
+   */
+  var initNetwork = function initNetwork(startAsHotspot, netConfig) {
+    obj = Object.assign({}, obj, netConfig);
+  };
+
   var publicAPI = {
     getCurrentState: obj,
     initIface: initIface,
+    initNetwork: initNetwork,
     toggleAP: toggleAP
   };
 

@@ -25,7 +25,7 @@ import { promisify } from "util";
  */
 
 function Iface() {
-  const obj = {};
+  let obj = {};
 
   const getIfaceMacAddress = () =>
     child
@@ -112,9 +112,20 @@ function Iface() {
     toggleAP(!obj.actingAsHotSpot);
   };
 
+  /**
+   * Initialize NEtwork
+   * @param {boolean} [startAsHotspot=true] - Whether or not to start as hotspot or client
+   * @param {clientConfig} clientConfig - Object used to Connect to Outside Network
+   * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
+   */
+  const initNetwork = (startAsHotspot, netConfig) => {
+    obj = Object.assign({}, obj, netConfig);
+  };
+
   const publicAPI = {
     getCurrentState: obj,
     initIface,
+    initNetwork,
     toggleAP
   };
 
