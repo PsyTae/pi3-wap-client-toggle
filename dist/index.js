@@ -132,7 +132,7 @@ function Iface() {
    * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
    */
   var initNetwork = function initNetwork(startAsHotspot, netConfig) {
-    obj = Object.assign({}, obj, netConfig);
+    obj = netConfig;
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
 
     obj.eth0 = obj.eth0 || {};
