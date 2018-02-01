@@ -27,13 +27,13 @@ import { promisify } from "util";
 function Iface() {
   let obj = {};
 
-  const getIfaceMacAddress = () =>
+  const getIfaceMacAddress = iface =>
     child
-      .execFileSync("cat", [`/sys/class/net/${obj.iface}/address`])
+      .execFileSync("cat", [`/sys/class/net/${iface}/address`])
       .toString()
       .trim();
 
-  const getIfaceSubNet = () => ip.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
+  const getIfaceSubNet = (ipAddress, subnet) => ip.subnet(ipAddress, subnet);
 
   const execFilePromise = promisify(child.execFile);
 
@@ -154,6 +154,21 @@ function Iface() {
     const objKeys = Object.keys(obj);
     objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1);
     objKeys.splice(objKeys.indexOf("static"), 1);
+
+    objKeys.forEach(elem => {
+      if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
+      if (!obj[elem].server.subnet) {
+        obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
+      }
+      obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10))
+        ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10)
+        : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2);
+      obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(
+        ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
+      )
+        ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
+        : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
+    });
   };
 
   const publicAPI = {

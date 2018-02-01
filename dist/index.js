@@ -40,12 +40,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function Iface() {
   var obj = {};
 
-  var getIfaceMacAddress = function getIfaceMacAddress() {
-    return _child_process2.default.execFileSync("cat", ["/sys/class/net/" + obj.iface + "/address"]).toString().trim();
+  var getIfaceMacAddress = function getIfaceMacAddress(iface) {
+    return _child_process2.default.execFileSync("cat", ["/sys/class/net/" + iface + "/address"]).toString().trim();
   };
 
-  var getIfaceSubNet = function getIfaceSubNet() {
-    return _ip2.default.subnet(obj.apConfig.address, obj.apConfig.subnetMask);
+  var getIfaceSubNet = function getIfaceSubNet(ipAddress, subnet) {
+    return _ip2.default.subnet(ipAddress, subnet);
   };
 
   var execFilePromise = (0, _util.promisify)(_child_process2.default.execFile);
@@ -167,6 +167,15 @@ function Iface() {
     var objKeys = Object.keys(obj);
     objKeys.splice(objKeys.indexOf("actingAsHotSpot"), 1);
     objKeys.splice(objKeys.indexOf("static"), 1);
+
+    objKeys.forEach(function (elem) {
+      if (!obj[elem].mac) obj[elem].mac = getIfaceMacAddress(elem);
+      if (!obj[elem].server.subnet) {
+        obj[elem].server.subnet = getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
+      }
+      obj[elem].server.dhcpFirst = obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2);
+      obj[elem].server.dhcpLast = obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
+    });
   };
 
   var publicAPI = {
