@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "babel src -d dist",
+    "prepublish": "npm run build",
     "server": "node dist/index.js",
     "start": "babel-node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,10 +14,15 @@
     "type": "git",
     "url": "https://github.com/PsyTae/pi3-wap-client-toggle.git"
   },
-  "keywords": ["pi3", "hostap", "dnsmasq"],
+  "keywords": [
+    "pi3",
+    "hostap",
+    "dnsmasq"
+  ],
   "author": "Shaun Branham <'Shaun.Branham@digitalallyinc.com'>",
   "license": "ISC",
   "dependencies": {
+    "async": "^2.6.0",
     "ip": "^1.1.5"
   },
   "devDependencies": {

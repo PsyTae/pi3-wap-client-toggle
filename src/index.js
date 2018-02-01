@@ -1,5 +1,5 @@
 // npm i -D babel-cli babel-preset-env
-/* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }] */
+/* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0 */
 
 import child from "child_process";
 import ip from "ip";
@@ -18,8 +18,10 @@ import { promisify } from "util";
  * @property {number} [wapChannel=6] - Channel WAP will radiate on
  */
 
+const execFilePromise = promisify(child.execFile);
+
 function NetSet() {
-  let obj = {};
+  const obj = {};
 
   const getIfaceMacAddress = iface =>
     child
@@ -29,22 +31,20 @@ function NetSet() {
 
   const getIfaceSubNet = (ipAddress, subnet) => ip.subnet(ipAddress, subnet);
 
-  const execFilePromise = promisify(child.execFile);
-
   const stopServices = () =>
-    new Promise((resolve, reject) => {
+    new Promise((stopResolve, stopReject) => {
       execFilePromise("systemctl", ["stop", "hostapd"])
         .then(execFilePromise("systemctl", ["stop", "dnsmasq"]))
-        .then(() => resolve())
-        .catch(error => reject(error));
+        .then(() => stopResolve())
+        .catch(error => stopReject(error));
     });
 
   const startServices = () =>
-    new Promise((resolve, reject) => {
+    new Promise((startResolve, startReject) => {
       execFilePromise("systemctl", ["start", "dnsmasq"])
         .then(execFilePromise("systemctl", ["start", "hostapd"]))
-        .then(() => resolve())
-        .catch(error => reject(error));
+        .then(() => startResolve())
+        .catch(error => startReject(error));
     });
 
   const toggleAP = state => {
@@ -72,8 +72,7 @@ function NetSet() {
   /**
    * Initialize Network
    * @param {boolean} [startAsHotspot=true] - Whether or not to start as hotspot or client
-   * @param {netConfig} clientConfig - Object used to Connect to Outside Network
-   * @param {apConfig} apConfig - Object used to Establish a Wireless Access Point
+   * @param {netConfig} netConfig - Object used to store all connection info for network setup
    */
   const initNetwork = (startAsHotspot, netConfig) => {
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
