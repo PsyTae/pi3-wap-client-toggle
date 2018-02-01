@@ -66,6 +66,7 @@ function NetSet() {
 
   var setStates = function setStates(states) {
     console.log(states);
+    console.dir(obj, { depth: null });
     // obj.actingAsHotSpot = !state;
     // if (state) {
     // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
@@ -92,6 +93,7 @@ function NetSet() {
    * @param {netConfig} netConfig - Object used to store all connection info for network setup
    */
   var initNetwork = function initNetwork(startAsHotspot, netConfig) {
+    var states = {};
     var objKeys = Object.keys(obj);
     var configKeys = netConfig ? Object.keys(netConfig) : [];
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
@@ -102,6 +104,7 @@ function NetSet() {
       obj[elem] = elem === "static" ? netConfig[elem] : {};
       if (elem !== "static") obj[elem].mac = netConfig[elem].mac ? netConfig[elem].mac : getIfaceMacAddress(elem);
       if (netConfig[elem].server) {
+        states[elem] = "server";
         obj[elem].server = {};
         obj[elem].server.address = netConfig[elem].server.address ? netConfig[elem].server.address : "10.255.255.255";
         obj[elem].server.dhcpLease = netConfig[elem].server.dhcpLease ? netConfig[elem].server.dhcpLease : "12h";
@@ -112,11 +115,16 @@ function NetSet() {
         obj[elem].server.dhcpLast = netConfig[elem].server.dhcpLast ? netConfig[elem].server.dhcpLast : obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
       }
       if (netConfig[elem].client) {
+        states[elem] = "client";
         obj[elem].client = {};
         obj[elem].client.pass = netConfig[elem].client.pass ? netConfig[elem].client.pass : "Pa$$w0rd";
         obj[elem].client.ssid = netConfig[elem].client.ssid ? netConfig[elem].client.ssid : "VL" + _os2.default.hostname().toUpperCase();
       }
+      if (netConfig[elem].server && netConfig[elem].client) states[elem] = "client";
     });
+
+    states.eth0 = "server";
+    states.wlan0 = obj.actingAsHotSpot ? "server" : "client";
 
     obj.eth0 = netConfig && netConfig.eth0 ? netConfig.eth0 : {};
     obj.static = netConfig && netConfig.static ? netConfig.static : [];
@@ -148,7 +156,7 @@ function NetSet() {
     obj.wlan0.server.dhcpFirst = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpFirst ? netConfig.wlan0.server.dhcpFirst : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2);
     obj.wlan0.server.dhcpLast = netConfig && netConfig.wlan0 && netConfig.wlan0.server.dhcpLast ? netConfig.wlan0.server.dhcpLast : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
 
-    setStates({ eth0: "server", wlan0: "server", wlan1: "client" });
+    setStates(states);
   };
 
   var publicAPI = {
