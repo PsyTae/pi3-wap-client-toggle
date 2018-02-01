@@ -60,7 +60,7 @@ const Network = () => {
   };
 
   const initNetwork = async (startAsHotspot, setupObj) => {
-    obj = setupObj;
+    obj = setupObj || obj;
 
     obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
 

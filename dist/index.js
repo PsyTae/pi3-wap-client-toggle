@@ -85,7 +85,7 @@ var Network = function Network() {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              obj = setupObj;
+              obj = setupObj || obj;
 
               obj.actingAsHotSpot = startAsHotspot ? !!startAsHotspot : true;
 
