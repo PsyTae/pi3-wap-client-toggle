@@ -1,7 +1,6 @@
 // npm i -D babel-cli babel-preset-env
 /* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0 */
 
-import async from "async";
 import child from "child_process";
 import ip from "ip";
 import os from "os";
@@ -10,8 +9,13 @@ import { promisify } from "util";
 const Network = () => {
   let obj = {};
 
+  const toggleAP = state => {};
+
+  const initNetwork = (startAsHotspot, setupObj) => {};
+
   const execFilePromise = promisify(child.execFile);
 
+  /*
   const getIfaceMacAddress = iface =>
     child
       .execFileSync("cat", [`/sys/class/net/${iface}/address`])
@@ -121,7 +125,7 @@ const Network = () => {
     //     ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)
     //     : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
     // });
-  };
+  }; */
 
   const publicAPI = {
     getCurrentState: obj,
