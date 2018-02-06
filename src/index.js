@@ -2,6 +2,7 @@
 /* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0, no-nested-ternary: 0, no-extend-native: 0 */
 
 import child from "child_process";
+import fs from "fs";
 import ip from "ip";
 import os from "os";
 
@@ -95,7 +96,7 @@ function NetSet() {
             StdErr: dnsStdErr
           };
           return callback ? callback(null, cbObj) : resolve(cbObj);
-    });
+        });
       });
     });
 
@@ -121,27 +122,27 @@ function NetSet() {
 
   const setStates = (states, callback) =>
     new Promise((resolve, reject) => {
-    console.log(states);
-    console.dir(obj, { depth: null });
+      console.log(states);
+      console.dir(obj, { depth: null });
       states.forEach(iface => {});
       return callback ? callback(null, obj) : resolve(obj);
     });
 
-    // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
-    // todo: check files to see if services need to be stopped and files need to be reconfigured
-    // todo: backup files if originals are not already saved
-    // todo: stop services
-    // todo: setup files for hostapd, and dnsmasq
-    // todo: start services
-    // todo: set obj.actingAsHotSpot = true
+  // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
+  // todo: check files to see if services need to be stopped and files need to be reconfigured
+  // todo: backup files if originals are not already saved
+  // todo: stop services
+  // todo: setup files for hostapd, and dnsmasq
+  // todo: start services
+  // todo: set obj.actingAsHotSpot = true
 
-    // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
-    // todo: check files to see if services need to be stopped and files need to be reconfigured
-    // todo: backup files if originals are not already saved
-    // todo: stop services
-    // todo: setup files to connect to wifi
-    // todo: start services
-    // todo: set obj.actingAsHotSpot = false
+  // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
+  // todo: check files to see if services need to be stopped and files need to be reconfigured
+  // todo: backup files if originals are not already saved
+  // todo: stop services
+  // todo: setup files to connect to wifi
+  // todo: start services
+  // todo: set obj.actingAsHotSpot = false
 
   /**
    * Initialize Network
@@ -291,6 +292,26 @@ function NetSet() {
 
   return publicAPI;
 }
+
+const files = [
+  "/etc/default/hostapd",
+  "/etc/dhcpd.conf",
+  "/etc/dnsmasq.conf",
+  "/etc/hostapd/hostapd.conf",
+  "/etc/network/interfaces",
+  "/etc/wpa_supplicant/wpa_supplicant.conf"
+];
+
+const makeBackup = file =>
+  new Promise((resolve, reject) => {
+    resolve(`file ${file}.bak exists: ${fs.existsSync(`${file}.bak`)}`);
+  });
+
+const mapBackups = files.map(makeBackup);
+
+const backupFiles = Promise.all(mapBackups);
+
+backupFiles.then(data => console.log(data));
 
 Array.prototype.diff = function(a) {
   return this.filter(i => a.indexOf(i) < 0);
