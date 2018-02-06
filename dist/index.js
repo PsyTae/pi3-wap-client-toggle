@@ -87,13 +87,18 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function NetSet() {
   var obj = {};
 
-  var files = ["/etc/default/hostapd", "/etc/dhcpd.conf", "/etc/dnsmasq.conf", "/etc/hostapd/hostapd.conf", "/etc/network/interfaces", "/etc/wpa_supplicant/wpa_supplicant.conf"];
+  var files = ["/etc/default/hostapd", "/etc/dhcpcd.conf", "/etc/dnsmasq.conf", "/etc/hostapd/hostapd.conf", "/etc/network/interfaces", "/etc/wpa_supplicant/wpa_supplicant.conf"];
 
   var makeBackup = function makeBackup(file) {
     return new Promise(function (resolve, reject) {
       if (_fs2.default.existsSync(file + ".bak")) return resolve(true);
-      _fs2.default.copyFile(file, file + ".bak", function (cpErr, cpResult) {
-        if (cpErr) return reject(cpErr);
+      _fs2.default.copyFile(file, file + ".bak", function (cpErr) {
+        if (cpErr && cpErr.code === "ENOENT") {
+          _fs2.default.writeFile(file + ".bak", null, function (writeErr) {
+            if (writeErr) return reject(writeErr);
+            return resolve(true);
+          });
+        } else if (cpErr) return reject(cpErr);
         return resolve(true);
       });
     });

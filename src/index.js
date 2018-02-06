@@ -74,7 +74,7 @@ function NetSet() {
 
   const files = [
     "/etc/default/hostapd",
-    "/etc/dhcpd.conf",
+    "/etc/dhcpcd.conf",
     "/etc/dnsmasq.conf",
     "/etc/hostapd/hostapd.conf",
     "/etc/network/interfaces",
@@ -84,8 +84,13 @@ function NetSet() {
   const makeBackup = file =>
     new Promise((resolve, reject) => {
       if (fs.existsSync(`${file}.bak`)) return resolve(true);
-      fs.copyFile(file, `${file}.bak`, (cpErr, cpResult) => {
-        if (cpErr) return reject(cpErr);
+      fs.copyFile(file, `${file}.bak`, cpErr => {
+        if (cpErr && cpErr.code === "ENOENT") {
+          fs.writeFile(`${file}.bak`, null, writeErr => {
+            if (writeErr) return reject(writeErr);
+            return resolve(true);
+          });
+        } else if (cpErr) return reject(cpErr);
         return resolve(true);
       });
     });
