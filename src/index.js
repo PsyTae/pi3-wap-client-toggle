@@ -79,20 +79,44 @@ function NetSet() {
 
   const getIfaceSubNet = (ipAddress, subnet) => ip.subnet(ipAddress, subnet);
 
-  const stopServices = () =>
-    new Promise((stopResolve, stopReject) => {
-      execFilePromise("systemctl", ["stop", "hostapd"])
-        .then(execFilePromise("systemctl", ["stop", "dnsmasq"]))
-        .then(() => stopResolve())
-        .catch(error => stopReject(error));
+  const stopServices = callback =>
+    new Promise((resolve, reject) => {
+      const cbObj = {};
+      child.execFile("systemctl", ["stop", "hostapd"], (hostErr, hostStdOut, hostStdErr) => {
+        if (hostErr) return callback ? callback(hostErr) : reject(hostErr);
+        cbObj.hostapd = {
+          StdOut: hostStdOut,
+          StdErr: hostStdErr
+        };
+        child.execFile("systemctl", ["stop", "dnsmasq"], (dnsErr, dnsStdOut, dnsStdErr) => {
+          if (dnsErr) return callback ? callback(dnsErr) : reject(dnsErr);
+          cbObj.dnsmasq = {
+            StdOut: dnsStdOut,
+            StdErr: dnsStdErr
+          };
+          return callback ? callback(null, cbObj) : resolve(cbObj);
+    });
+      });
     });
 
-  const startServices = () =>
-    new Promise((startResolve, startReject) => {
-      execFilePromise("systemctl", ["start", "dnsmasq"])
-        .then(execFilePromise("systemctl", ["start", "hostapd"]))
-        .then(() => startResolve())
-        .catch(error => startReject(error));
+  const startServices = callback =>
+    new Promise((resolve, reject) => {
+      const cbObj = {};
+      child.execFile("systemctl", ["start", "hostapd"], (hostErr, hostStdOut, hostStdErr) => {
+        if (hostErr) return callback ? callback(hostErr) : reject(hostErr);
+        cbObj.hostapd = {
+          StdOut: hostStdOut,
+          StdErr: hostStdErr
+        };
+        child.execFile("systemctl", ["start", "dnsmasq"], (dnsErr, dnsStdOut, dnsStdErr) => {
+          if (dnsErr) return callback ? callback(dnsErr) : reject(dnsErr);
+          cbObj.dnsmasq = {
+            StdOut: dnsStdOut,
+            StdErr: dnsStdErr
+          };
+          return callback ? callback(null, cbObj) : resolve(cbObj);
+        });
+      });
     });
 
   const setStates = (states, callback) =>
