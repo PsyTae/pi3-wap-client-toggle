@@ -83,7 +83,8 @@ function NetSet() {
 
   const makeBackup = file =>
     new Promise((resolve, reject) => {
-      resolve(`file ${file}.bak exists: ${fs.existsSync(`${file}.bak`)}`);
+      if (fs.existsSync(`${file}.bak`)) return resolve(true);
+      return resolve(`file ${file}.bak exists: ${fs.existsSync(`${file}.bak`)}`);
     });
 
   const mapBackups = files.map(makeBackup);
@@ -304,8 +305,10 @@ function NetSet() {
     setStates(states);
   };
 
+  const getCurrentState = () => Object.assign({}, obj);
+
   const publicAPI = {
-    getCurrentState: obj,
+    getCurrentState,
     initNetwork,
     setStates
   };

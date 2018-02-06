@@ -91,7 +91,8 @@ function NetSet() {
 
   var makeBackup = function makeBackup(file) {
     return new Promise(function (resolve, reject) {
-      resolve("file " + file + ".bak exists: " + _fs2.default.existsSync(file + ".bak"));
+      if (_fs2.default.existsSync(file + ".bak")) return resolve(true);
+      return resolve("file " + file + ".bak exists: " + _fs2.default.existsSync(file + ".bak"));
     });
   };
 
@@ -255,8 +256,12 @@ function NetSet() {
     setStates(states);
   };
 
+  var getCurrentState = function getCurrentState() {
+    return Object.assign({}, obj);
+  };
+
   var publicAPI = {
-    getCurrentState: obj,
+    getCurrentState: getCurrentState,
     initNetwork: initNetwork,
     setStates: setStates
   };
