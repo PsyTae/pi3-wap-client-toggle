@@ -92,7 +92,10 @@ function NetSet() {
   var makeBackup = function makeBackup(file) {
     return new Promise(function (resolve, reject) {
       if (_fs2.default.existsSync(file + ".bak")) return resolve(true);
-      return resolve("file " + file + ".bak exists: " + _fs2.default.existsSync(file + ".bak"));
+      _fs2.default.copyFile(file, file + ".bak", function (cpErr, cpResult) {
+        if (cpErr) return reject(cpErr);
+        return resolve(true);
+      });
     });
   };
 
@@ -157,6 +160,8 @@ function NetSet() {
 
       backupFiles.then(function (data) {
         return console.log(data);
+      }).catch(function (err) {
+        return console.error(err);
       });
 
       return callback ? callback(null, obj) : resolve(obj);

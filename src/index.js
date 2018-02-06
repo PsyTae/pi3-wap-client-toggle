@@ -84,7 +84,10 @@ function NetSet() {
   const makeBackup = file =>
     new Promise((resolve, reject) => {
       if (fs.existsSync(`${file}.bak`)) return resolve(true);
-      return resolve(`file ${file}.bak exists: ${fs.existsSync(`${file}.bak`)}`);
+      fs.copyFile(file, `${file}.bak`, (cpErr, cpResult) => {
+        if (cpErr) return reject(cpErr);
+        return resolve(true);
+      });
     });
 
   const mapBackups = files.map(makeBackup);
@@ -144,7 +147,7 @@ function NetSet() {
       console.log(states);
       console.dir(obj, { depth: null });
 
-      backupFiles.then(data => console.log(data));
+      backupFiles.then(data => console.log(data)).catch(err => console.error(err));
 
       return callback ? callback(null, obj) : resolve(obj);
     });
