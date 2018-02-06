@@ -124,7 +124,9 @@ function NetSet() {
     new Promise((resolve, reject) => {
       console.log(states);
       console.dir(obj, { depth: null });
-      states.forEach(iface => {});
+      states.forEach(iface => {
+        console.log(iface);
+      });
       return callback ? callback(null, obj) : resolve(obj);
     });
 
