@@ -4,42 +4,69 @@
 import child from "child_process";
 import ip from "ip";
 import os from "os";
-import { promisify } from "util";
 
 /**
  * Object to initialize our available network interfaces with
- * @typedef {Object} netConfig
+ * @typedef {Object} obj
  * @property {boolean} [actingAsHotSpot=true] - Whether to start WLAN0 as a hotspot or not.
- * @property {static[]} [static=[]] - array of network devices that need to have a static ip address reserved for them, defaults to empty array
+ * @property {static} [static=[]] - array of network devices that need to have a static ip address reserved for them, defaults to empty array
  * @property {...interface} [interface] - eth0, wlan0, wlan1, will contain client/server object, or both for the interface in question
  */
 
 /**
- * @typedef {Object} static
+ * Object passed in from calling program to initialize our network setup.
+ * @typedef {Object} netConfig
+ * @property {static} [static=[]] - array of network devices that need to have a static ip address reserved for them, defaults to empty array
+ * @property {...interface} [interface] - eth0, wlan0, wlan1, will contain client/server object, or both for the interface in question
+ */
+
+/**
+ * Array of Network Devices that need to have a fixed IP address, defautls to an empty array
+ * @typedef {Object[]} static
  * @property {string} mac - mac address of network device needing a reserved IP address
  * @property {string} ipAddress - ip address to be reserved for network device
  * @property {string} name - name to give to device in dns
  */
 
 /**
- * eth0, wlan0, wlan1: will contain client/server object, or both for the interface in question
- * @typedef {Object} interface
- * @property {client[]} client - Object with Client Properties for the Interface
- * @property {server} server - Object with Server Properties for the Interface
- */
-
-/**
- * @typedef {Object} client
+ * List of APs to listen for and connect to when in WiFi mode.
+ * @typedef {Object[]} clients
  * @property {string} name - Nickname to give the wireless Access Point Connection
  * @property {string} pass - Passphase to use to connect to a Wireless Access Point
  * @property {string} ssid - SSID to use to connect to a Wireless Access Point
  */
 
 /**
- * @typedef {Object} server
+ * calculated by ip, needs an ip address, and subnetMask
+ * @typedef {Object} subnet
+ * @property {string} subnet.networkAddress - network address for the subnet
+ * @property {string} subnet.firstAddress - first useable ip address of the subnet
+ * @property {string} subnet.lastAddress - last usable ip address of the subnet
+ * @property {string} subnet.broadcastAddress - broadcast address for the subnet
+ * @property {string} subnet.subnetMask - subnetmask for the subnet
+ * @property {string} subnet.subnetMaskLength - cidr length for the subnet
+ * @property {string} subnet.numHosts - how many hosts found in th subnet
+ * @property {string} subnet.length - how many address are in the subnet, indluding network and broadcast
+ * @property {function} subnet.contains - function to see if an Ip Address given falls inside the specified subnet
  */
 
-const execFilePromise = promisify(child.execFile);
+/**
+ * @typedef {Object} server
+ * @property {string} address - Static IP Address to give interface when in DHCP Server Mode
+ * @property {string} [subnetMask="255.255.255.0"] - Subnet mask to use when in DHCP Server Mode
+ * @property {string} [dhcpLease="12h"] - How long the dhcp lease should be good for 1h = 1 hour, 1m = 1 minute, 30 = 30 seconds | defaults to 12h
+ * @property {number} [dhcpPoolSize=10] - Size of the DHCP Pool to lease from
+ * @property {subnet} subnet - Calculated based on address and subnetMask
+ * @property {string} dhcpFirst - Calculated based on Subnet size and dhcpPoolSize
+ * @property {string} dhcpLast - Calculated based on Subnet size and dhcpPoolSize
+ */
+
+/**
+ * eth0, wlan0, wlan1: will contain client/server object, or both for the interface in question
+ * @typedef {Object} interface
+ * @property {clients=} clients - Object with Client Properties for the Interface
+ * @property {server=} server - Object with Server Properties for the Interface
+ */
 
 function NetSet() {
   const obj = {};
@@ -93,8 +120,8 @@ function NetSet() {
 
   /**
    * Initialize Network
-   * @param {boolean} [startAsHotspot=true] - Whether or not to start as hotspot or client
-   * @param {netConfig} netConfig - Object used to store all connection info for network setup
+   * @type {boolean} [startAsHotspot=true] - Whether or not to start as hotspot or client
+   * @type {netConfig} netConfig - Object used to store all connection info for network setup
    */
   const initNetwork = (startAsHotspot, netConfig) => {
     const states = {};
