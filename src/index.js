@@ -95,11 +95,14 @@ function NetSet() {
         .catch(error => startReject(error));
     });
 
-  const setStates = states => {
+  const setStates = (states, callback) =>
+    new Promise((resolve, reject) => {
     console.log(states);
     console.dir(obj, { depth: null });
-    // obj.actingAsHotSpot = !state;
-    // if (state) {
+      states.forEach(iface => {});
+      return callback ? callback(null, obj) : resolve(obj);
+    });
+
     // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
     // todo: check files to see if services need to be stopped and files need to be reconfigured
     // todo: backup files if originals are not already saved
@@ -107,7 +110,7 @@ function NetSet() {
     // todo: setup files for hostapd, and dnsmasq
     // todo: start services
     // todo: set obj.actingAsHotSpot = true
-    // } else {
+
     // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
     // todo: check files to see if services need to be stopped and files need to be reconfigured
     // todo: backup files if originals are not already saved
@@ -115,8 +118,6 @@ function NetSet() {
     // todo: setup files to connect to wifi
     // todo: start services
     // todo: set obj.actingAsHotSpot = false
-    // }
-  };
 
   /**
    * Initialize Network
