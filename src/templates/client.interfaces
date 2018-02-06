@@ -15,5 +15,3 @@ iface eth0 inet static
 
 auto wlan0
 iface wlan0 inet dhcp
-    wpa-ssid "MosEisleySpaceport"
-    wpa-psk "obiwanr2d2"
