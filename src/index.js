@@ -72,6 +72,24 @@ import os from "os";
 function NetSet() {
   const obj = {};
 
+  const files = [
+    "/etc/default/hostapd",
+    "/etc/dhcpd.conf",
+    "/etc/dnsmasq.conf",
+    "/etc/hostapd/hostapd.conf",
+    "/etc/network/interfaces",
+    "/etc/wpa_supplicant/wpa_supplicant.conf"
+  ];
+
+  const makeBackup = file =>
+    new Promise((resolve, reject) => {
+      resolve(`file ${file}.bak exists: ${fs.existsSync(`${file}.bak`)}`);
+    });
+
+  const mapBackups = files.map(makeBackup);
+
+  const backupFiles = Promise.all(mapBackups);
+
   const getIfaceMacAddress = iface =>
     child
       .execFileSync("cat", [`/sys/class/net/${iface}/address`])
@@ -124,9 +142,9 @@ function NetSet() {
     new Promise((resolve, reject) => {
       console.log(states);
       console.dir(obj, { depth: null });
-      states.forEach(iface => {
-        console.log(iface);
-      });
+
+      backupFiles.then(data => console.log(data));
+
       return callback ? callback(null, obj) : resolve(obj);
     });
 
@@ -294,26 +312,6 @@ function NetSet() {
 
   return publicAPI;
 }
-
-const files = [
-  "/etc/default/hostapd",
-  "/etc/dhcpd.conf",
-  "/etc/dnsmasq.conf",
-  "/etc/hostapd/hostapd.conf",
-  "/etc/network/interfaces",
-  "/etc/wpa_supplicant/wpa_supplicant.conf"
-];
-
-const makeBackup = file =>
-  new Promise((resolve, reject) => {
-    resolve(`file ${file}.bak exists: ${fs.existsSync(`${file}.bak`)}`);
-  });
-
-const mapBackups = files.map(makeBackup);
-
-const backupFiles = Promise.all(mapBackups);
-
-backupFiles.then(data => console.log(data));
 
 Array.prototype.diff = function(a) {
   return this.filter(i => a.indexOf(i) < 0);

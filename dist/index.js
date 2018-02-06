@@ -87,6 +87,18 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function NetSet() {
   var obj = {};
 
+  var files = ["/etc/default/hostapd", "/etc/dhcpd.conf", "/etc/dnsmasq.conf", "/etc/hostapd/hostapd.conf", "/etc/network/interfaces", "/etc/wpa_supplicant/wpa_supplicant.conf"];
+
+  var makeBackup = function makeBackup(file) {
+    return new Promise(function (resolve, reject) {
+      resolve("file " + file + ".bak exists: " + _fs2.default.existsSync(file + ".bak"));
+    });
+  };
+
+  var mapBackups = files.map(makeBackup);
+
+  var backupFiles = Promise.all(mapBackups);
+
   var getIfaceMacAddress = function getIfaceMacAddress(iface) {
     return _child_process2.default.execFileSync("cat", ["/sys/class/net/" + iface + "/address"]).toString().trim();
   };
@@ -141,9 +153,11 @@ function NetSet() {
     return new Promise(function (resolve, reject) {
       console.log(states);
       console.dir(obj, { depth: null });
-      states.forEach(function (iface) {
-        console.log(iface);
+
+      backupFiles.then(function (data) {
+        return console.log(data);
       });
+
       return callback ? callback(null, obj) : resolve(obj);
     });
   };
@@ -249,22 +263,6 @@ function NetSet() {
 
   return publicAPI;
 }
-
-var files = ["/etc/default/hostapd", "/etc/dhcpd.conf", "/etc/dnsmasq.conf", "/etc/hostapd/hostapd.conf", "/etc/network/interfaces", "/etc/wpa_supplicant/wpa_supplicant.conf"];
-
-var makeBackup = function makeBackup(file) {
-  return new Promise(function (resolve, reject) {
-    resolve("file " + file + ".bak exists: " + _fs2.default.existsSync(file + ".bak"));
-  });
-};
-
-var mapBackups = files.map(makeBackup);
-
-var backupFiles = Promise.all(mapBackups);
-
-backupFiles.then(function (data) {
-  return console.log(data);
-});
 
 Array.prototype.diff = function (a) {
   return this.filter(function (i) {
