@@ -16,7 +16,12 @@ var _os = require("os");
 
 var _os2 = _interopRequireDefault(_os);
 
+var _util = require("util");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; } // npm i -D babel-cli babel-preset-env
+/* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0, no-nested-ternary: 0, no-extend-native: 0 */
 
 /**
  * Object to initialize our available network interfaces with
@@ -81,32 +86,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @property {server=} server - Object with Server Properties for the Interface
  */
 
-// npm i -D babel-cli babel-preset-env
-/* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0, no-nested-ternary: 0, no-extend-native: 0 */
-
 function NetSet() {
+  var _this = this;
+
   var obj = {};
 
   var files = ["/etc/default/hostapd", "/etc/dhcpcd.conf", "/etc/dnsmasq.conf", "/etc/hostapd/hostapd.conf", "/etc/network/interfaces", "/etc/wpa_supplicant/wpa_supplicant.conf"];
-
-  var makeBackup = function makeBackup(file) {
-    return new Promise(function (resolve, reject) {
-      if (_fs2.default.existsSync(file + ".bak")) return resolve(true);
-      _fs2.default.copyFile(file, file + ".bak", function (cpErr) {
-        if (cpErr && cpErr.code === "ENOENT") {
-          _fs2.default.writeFile(file + ".bak", null, function (writeErr) {
-            if (writeErr) return reject(writeErr);
-            return resolve(true);
-          });
-        } else if (cpErr) return reject(cpErr);
-        return resolve(true);
-      });
-    });
-  };
-
-  var mapBackups = files.map(makeBackup);
-
-  var backupFiles = Promise.all(mapBackups);
 
   var getIfaceMacAddress = function getIfaceMacAddress(iface) {
     return _child_process2.default.execFileSync("cat", ["/sys/class/net/" + iface + "/address"]).toString().trim();
@@ -158,20 +143,125 @@ function NetSet() {
     });
   };
 
-  var setStates = function setStates(states, callback) {
-    return new Promise(function (resolve, reject) {
-      console.log(states);
-      console.dir(obj, { depth: null });
+  var setStates = function () {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(states) {
+      var createEmptyBackupFile, makeBackup, ensureBackups;
+      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              console.log(states);
+              console.dir(obj, { depth: null });
 
-      backupFiles.then(function (data) {
-        return console.log(data);
-      }).catch(function (err) {
-        return console.error(err);
-      });
+              createEmptyBackupFile = function () {
+                var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(file) {
+                  var writeFile;
+                  return regeneratorRuntime.wrap(function _callee$(_context) {
+                    while (1) {
+                      switch (_context.prev = _context.next) {
+                        case 0:
+                          writeFile = (0, _util.promisify)(_fs2.default.writeFile);
+                          // if error writing to file for any reason it will throw an error
 
-      return callback ? callback(null, obj) : resolve(obj);
-    });
-  };
+                          _context.next = 3;
+                          return writeFile(file + ".bak", Buffer.alloc(0));
+
+                        case 3:
+                          return _context.abrupt("return", true);
+
+                        case 4:
+                        case "end":
+                          return _context.stop();
+                      }
+                    }
+                  }, _callee, _this);
+                }));
+
+                return function createEmptyBackupFile(_x2) {
+                  return _ref2.apply(this, arguments);
+                };
+              }();
+
+              makeBackup = function () {
+                var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(file) {
+                  var copyFile;
+                  return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                    while (1) {
+                      switch (_context2.prev = _context2.next) {
+                        case 0:
+                          if (!_fs2.default.existsSync(file + ".bak")) {
+                            _context2.next = 2;
+                            break;
+                          }
+
+                          return _context2.abrupt("return", true);
+
+                        case 2:
+                          _context2.prev = 2;
+                          copyFile = (0, _util.promisify)(_fs2.default.copyFile);
+                          // if backup file doens't exist copy file to file.bak
+
+                          _context2.next = 6;
+                          return copyFile(file, file + ".bak");
+
+                        case 6:
+                          return _context2.abrupt("return", true);
+
+                        case 9:
+                          _context2.prev = 9;
+                          _context2.t0 = _context2["catch"](2);
+
+                          if (!(_context2.t0.code === "ENOENT")) {
+                            _context2.next = 13;
+                            break;
+                          }
+
+                          return _context2.abrupt("return", createEmptyBackupFile(file));
+
+                        case 13:
+                          return _context2.abrupt("return", _context2.t0);
+
+                        case 14:
+                        case "end":
+                          return _context2.stop();
+                      }
+                    }
+                  }, _callee2, _this, [[2, 9]]);
+                }));
+
+                return function makeBackup(_x3) {
+                  return _ref3.apply(this, arguments);
+                };
+              }();
+
+              _context3.prev = 4;
+              _context3.next = 7;
+              return Promise.all(files.map(makeBackup));
+
+            case 7:
+              ensureBackups = _context3.sent;
+
+              console.log(ensureBackups);
+
+              return _context3.abrupt("return", Object.assign({}, obj));
+
+            case 12:
+              _context3.prev = 12;
+              _context3.t0 = _context3["catch"](4);
+              return _context3.abrupt("return", _context3.t0);
+
+            case 15:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, _this, [[4, 12]]);
+    }));
+
+    return function setStates(_x) {
+      return _ref.apply(this, arguments);
+    };
+  }();
 
   // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
   // todo: check files to see if services need to be stopped and files need to be reconfigured
@@ -263,7 +353,8 @@ function NetSet() {
 
     if (!obj.wlan0.server.dhcpLast) obj.wlan0.server.dhcpLast = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpLast ? netConfig.wlan0.server.dhcpLast : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
 
-    setStates(states);
+    var setupWifi = setStates(states);
+    setupWifi.then().catch();
   };
 
   var getCurrentState = function getCurrentState() {
