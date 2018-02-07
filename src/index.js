@@ -2,9 +2,10 @@
 /* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0, no-nested-ternary: 0, no-extend-native: 0 */
 
 import child from "child_process";
-import fs from "fs";
+import fs, { copyFile, writeFile } from "fs";
 import ip from "ip";
 import os from "os";
+import { promisify } from "util";
 
 /**
  * Object to initialize our available network interfaces with
@@ -81,24 +82,6 @@ function NetSet() {
     "/etc/wpa_supplicant/wpa_supplicant.conf"
   ];
 
-  const makeBackup = file =>
-    new Promise((resolve, reject) => {
-      if (fs.existsSync(`${file}.bak`)) return resolve(true);
-      fs.copyFile(file, `${file}.bak`, cpErr => {
-        if (cpErr && cpErr.code === "ENOENT") {
-          fs.writeFile(`${file}.bak`, null, writeErr => {
-            if (writeErr) return reject(writeErr);
-            return resolve(true);
-          });
-        } else if (cpErr) return reject(cpErr);
-        return resolve(true);
-      });
-    });
-
-  const mapBackups = files.map(makeBackup);
-
-  const backupFiles = Promise.all(mapBackups);
-
   const getIfaceMacAddress = iface =>
     child
       .execFileSync("cat", [`/sys/class/net/${iface}/address`])
@@ -147,15 +130,47 @@ function NetSet() {
       });
     });
 
-  const setStates = (states, callback) =>
-    new Promise((resolve, reject) => {
-      console.log(states);
-      console.dir(obj, { depth: null });
+  const setStates = async states => {
+    console.log(states);
+    console.dir(obj, { depth: null });
 
-      backupFiles.then(data => console.log(data)).catch(err => console.error(err));
+    const makeBackup = async file => {
+      // if backup file exists already do nothing further return true.
+      if (fs.existsSync(`${file}.bak`)) return true;
+      try {
+        copyFile = promisify(fs.copyFile);
+        // if backup file doens't exist copy file to file.bak
+        await copyFile(file, `${file}.bak`);
+        // return true when file is copied to bakup file.
+        return true;
+      } catch (cpErr) {
+        // if file missing create an empty backup file
+        if (cpErr && cpErr.code === "ENOENT") {
+          try {
+            writeFile = promisify(fs.writeFile);
+            await writeFile(`${file}.bak`, Buffer.alloc(0));
+            return true;
+          } catch (writeErr) {
+            // if error writing to file for any reason return error
+            return writeErr;
+          }
+        }
+        // if copy error for any other reason return error
+        return cpErr;
+      }
+    };
 
-      return callback ? callback(null, obj) : resolve(obj);
-    });
+    try {
+      // const FileToBeModified = await Promise.all(states.map());
+      // ensure that there is a backup of all files that could be modified
+      const ensureBackups = await Promise.all(files.map(makeBackup));
+      console.log(ensureBackups);
+
+      return Object.assign({}, obj);
+    } catch (err) {
+      return err;
+    }
+  };
 
   // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
   // todo: check files to see if services need to be stopped and files need to be reconfigured
@@ -310,7 +325,8 @@ function NetSet() {
             ? ip.fromLong(ip.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize)
             : ip.fromLong(ip.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
 
-    setStates(states);
+    const setupWifi = setStates(states);
+    setupWifi.then().catch();
   };
 
   const getCurrentState = () => Object.assign({}, obj);
