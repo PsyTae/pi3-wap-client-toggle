@@ -2,7 +2,7 @@
 /* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0, no-nested-ternary: 0, no-extend-native: 0 */
 
 import child from "child_process";
-import fs, { copyFile, writeFile } from "fs";
+import fs from "fs";
 import ip from "ip";
 import os from "os";
 import { promisify } from "util";
@@ -134,26 +134,26 @@ function NetSet() {
     console.log(states);
     console.dir(obj, { depth: null });
 
+    const createEmptyBackupFile = async file => {
+      const writeFile = promisify(fs.writeFile);
+      // if error writing to file for any reason it will throw an error
+      await writeFile(`${file}.bak`, Buffer.alloc(0));
+      return true;
+    };
+
     const makeBackup = async file => {
       // if backup file exists already do nothing further return true.
       if (fs.existsSync(`${file}.bak`)) return true;
       try {
-        copyFile = promisify(fs.copyFile);
+        const copyFile = promisify(fs.copyFile);
         // if backup file doens't exist copy file to file.bak
         await copyFile(file, `${file}.bak`);
         // return true when file is copied to bakup file.
         return true;
       } catch (cpErr) {
         // if file missing create an empty backup file
-        if (cpErr && cpErr.code === "ENOENT") {
-          try {
-            writeFile = promisify(fs.writeFile);
-            await writeFile(`${file}.bak`, Buffer.alloc(0));
-            return true;
-          } catch (writeErr) {
-            // if error writing to file for any reason return error
-            return writeErr;
-          }
+        if (cpErr.code === "ENOENT") {
+            return createEmptyBackupFile(file);
         }
         // if copy error for any other reason return error
         return cpErr;
