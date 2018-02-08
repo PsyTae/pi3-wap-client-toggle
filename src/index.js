@@ -41,33 +41,42 @@ import { promisify } from "util";
 /**
  * calculated by ip, needs an ip address, and subnetMask
  * @typedef {Object} subnet
- * @property {string} subnet.networkAddress - network address for the subnet
- * @property {string} subnet.firstAddress - first useable ip address of the subnet
- * @property {string} subnet.lastAddress - last usable ip address of the subnet
- * @property {string} subnet.broadcastAddress - broadcast address for the subnet
- * @property {string} subnet.subnetMask - subnetmask for the subnet
- * @property {string} subnet.subnetMaskLength - cidr length for the subnet
- * @property {string} subnet.numHosts - how many hosts found in th subnet
- * @property {string} subnet.length - how many address are in the subnet, indluding network and broadcast
- * @property {function} subnet.contains - function to see if an Ip Address given falls inside the specified subnet
+ * @property {string} networkAddress - network address for the subnet
+ * @property {string} firstAddress - first useable ip address of the subnet
+ * @property {string} lastAddress - last usable ip address of the subnet
+ * @property {string} broadcastAddress - broadcast address for the subnet
+ * @property {string} subnetMask - subnetmask for the subnet
+ * @property {string} subnetMaskLength - cidr length for the subnet
+ * @property {string} numHosts - how many hosts found in th subnet
+ * @property {string} length - how many address are in the subnet, indluding network and broadcast
+ * @property {function} contains - function to see if an Ip Address given falls inside the specified subnet
+ */
+
+/**
+ * @typedef {Object} apInfo
+ * @property {boolean} bradcast - Whether to broadcast the SSID or not
+ * @property {number} channel - channel to broadcast out on
+ * @property {string} ssid - ssid to connect to for AP Mode
+ * @property {string} pass - password to authenticate access for AP Mode
  */
 
 /**
  * @typedef {Object} server
+ * @property {apInfo} [apInfo] - Object Containing broadcast, channel, ssid, and password for AP Mode
  * @property {string} address - Static IP Address to give interface when in DHCP Server Mode
  * @property {string} [subnetMask="255.255.255.0"] - Subnet mask to use when in DHCP Server Mode
  * @property {string} [dhcpLease="12h"] - How long the dhcp lease should be good for 1h = 1 hour, 1m = 1 minute, 30 = 30 seconds | defaults to 12h
  * @property {number} [dhcpPoolSize=10] - Size of the DHCP Pool to lease from
- * @property {subnet} subnet - Calculated based on address and subnetMask
- * @property {string} dhcpFirst - Calculated based on Subnet size and dhcpPoolSize
- * @property {string} dhcpLast - Calculated based on Subnet size and dhcpPoolSize
+ * @property {subnet} [subnet] - Calculated based on address and subnetMask
+ * @property {string} [dhcpFirst] - Calculated based on Subnet size and dhcpPoolSize
+ * @property {string} [dhcpLast] - Calculated based on Subnet size and dhcpPoolSize
  */
 
 /**
  * eth0, wlan0, wlan1: will contain client/server object, or both for the interface in question
  * @typedef {Object} interface
- * @property {clients=} clients - Object with Client Properties for the Interface
- * @property {server=} server - Object with Server Properties for the Interface
+ * @property {clients} clients - Object with Client Properties for the Interface
+ * @property {server} server - Object with Server Properties for the Interface
  */
 
 const files = [
