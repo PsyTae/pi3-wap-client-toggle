@@ -70,17 +70,17 @@ import { promisify } from "util";
  * @property {server=} server - Object with Server Properties for the Interface
  */
 
+const files = [
+  "/etc/default/hostapd",
+  "/etc/dhcpcd.conf",
+  "/etc/dnsmasq.conf",
+  "/etc/hostapd/hostapd.conf",
+  "/etc/network/interfaces",
+  "/etc/wpa_supplicant/wpa_supplicant.conf"
+];
+
 function NetSet() {
   const obj = {};
-
-  const files = [
-    "/etc/default/hostapd",
-    "/etc/dhcpcd.conf",
-    "/etc/dnsmasq.conf",
-    "/etc/hostapd/hostapd.conf",
-    "/etc/network/interfaces",
-    "/etc/wpa_supplicant/wpa_supplicant.conf"
-  ];
 
   const getIfaceMacAddress = iface =>
     child
@@ -131,7 +131,7 @@ function NetSet() {
     });
 
   const setStates = async states => {
-    console.log(states);
+    // console.log(states);
     console.dir(obj, { depth: null });
 
     const createEmptyBackupFile = async file => {
@@ -153,15 +153,22 @@ function NetSet() {
       } catch (cpErr) {
         // if file missing create an empty backup file
         if (cpErr.code === "ENOENT") {
-            return createEmptyBackupFile(file);
+          return createEmptyBackupFile(file);
         }
         // if copy error for any other reason return error
         return cpErr;
       }
     };
 
+    const createFileContent = async state => {
+      console.log(state);
+      return state;
+    };
+
     try {
-      // const FileToBeModified = await Promise.all(states.map());
+      const FilesToBeModified = await Promise.all(states.map(createFileContent));
+      console.log(FilesToBeModified);
+
       // ensure that there is a backup of all files that could be modified
       const ensureBackups = await Promise.all(files.map(makeBackup));
       console.log(ensureBackups);

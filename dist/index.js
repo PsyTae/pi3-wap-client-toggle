@@ -86,12 +86,12 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
  * @property {server=} server - Object with Server Properties for the Interface
  */
 
+var files = ["/etc/default/hostapd", "/etc/dhcpcd.conf", "/etc/dnsmasq.conf", "/etc/hostapd/hostapd.conf", "/etc/network/interfaces", "/etc/wpa_supplicant/wpa_supplicant.conf"];
+
 function NetSet() {
   var _this = this;
 
   var obj = {};
-
-  var files = ["/etc/default/hostapd", "/etc/dhcpcd.conf", "/etc/dnsmasq.conf", "/etc/hostapd/hostapd.conf", "/etc/network/interfaces", "/etc/wpa_supplicant/wpa_supplicant.conf"];
 
   var getIfaceMacAddress = function getIfaceMacAddress(iface) {
     return _child_process2.default.execFileSync("cat", ["/sys/class/net/" + iface + "/address"]).toString().trim();
@@ -144,13 +144,13 @@ function NetSet() {
   };
 
   var setStates = function () {
-    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(states) {
-      var createEmptyBackupFile, makeBackup, ensureBackups;
-      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(states) {
+      var createEmptyBackupFile, makeBackup, createFileContent, FilesToBeModified, ensureBackups;
+      return regeneratorRuntime.wrap(function _callee4$(_context4) {
         while (1) {
-          switch (_context3.prev = _context3.next) {
+          switch (_context4.prev = _context4.next) {
             case 0:
-              console.log(states);
+              // console.log(states);
               console.dir(obj, { depth: null });
 
               createEmptyBackupFile = function () {
@@ -234,28 +234,59 @@ function NetSet() {
                 };
               }();
 
-              _context3.prev = 4;
-              _context3.next = 7;
-              return Promise.all(files.map(makeBackup));
+              createFileContent = function () {
+                var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(state) {
+                  return regeneratorRuntime.wrap(function _callee3$(_context3) {
+                    while (1) {
+                      switch (_context3.prev = _context3.next) {
+                        case 0:
+                          console.log(state);
+                          return _context3.abrupt("return", state);
+
+                        case 2:
+                        case "end":
+                          return _context3.stop();
+                      }
+                    }
+                  }, _callee3, _this);
+                }));
+
+                return function createFileContent(_x4) {
+                  return _ref4.apply(this, arguments);
+                };
+              }();
+
+              _context4.prev = 4;
+              _context4.next = 7;
+              return Promise.all(states.map(createFileContent));
 
             case 7:
-              ensureBackups = _context3.sent;
+              FilesToBeModified = _context4.sent;
+
+              console.log(FilesToBeModified);
+
+              // ensure that there is a backup of all files that could be modified
+              _context4.next = 11;
+              return Promise.all(files.map(makeBackup));
+
+            case 11:
+              ensureBackups = _context4.sent;
 
               console.log(ensureBackups);
 
-              return _context3.abrupt("return", Object.assign({}, obj));
+              return _context4.abrupt("return", Object.assign({}, obj));
 
-            case 12:
-              _context3.prev = 12;
-              _context3.t0 = _context3["catch"](4);
-              return _context3.abrupt("return", _context3.t0);
+            case 16:
+              _context4.prev = 16;
+              _context4.t0 = _context4["catch"](4);
+              return _context4.abrupt("return", _context4.t0);
 
-            case 15:
+            case 19:
             case "end":
-              return _context3.stop();
+              return _context4.stop();
           }
         }
-      }, _callee3, _this, [[4, 12]]);
+      }, _callee4, _this, [[4, 16]]);
     }));
 
     return function setStates(_x) {
