@@ -279,9 +279,11 @@ function NetSet() {
             case 16:
               _context4.prev = 16;
               _context4.t0 = _context4["catch"](4);
+
+              console.error("catch Error:", _context4.t0);
               return _context4.abrupt("return", _context4.t0);
 
-            case 19:
+            case 20:
             case "end":
               return _context4.stop();
           }
@@ -385,7 +387,9 @@ function NetSet() {
     if (!obj.wlan0.server.dhcpLast) obj.wlan0.server.dhcpLast = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpLast ? netConfig.wlan0.server.dhcpLast : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
 
     var setupWifi = setStates(states);
-    setupWifi.then().catch();
+    setupWifi.then().catch(function (err) {
+      console.error(".catch Error", err);
+    });
   };
 
   var getCurrentState = function getCurrentState() {

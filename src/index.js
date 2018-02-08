@@ -175,6 +175,7 @@ function NetSet() {
 
       return Object.assign({}, obj);
     } catch (err) {
+      console.error("catch Error:", err);
       return err;
     }
   };
@@ -333,7 +334,9 @@ function NetSet() {
             : ip.fromLong(ip.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
 
     const setupWifi = setStates(states);
-    setupWifi.then().catch();
+    setupWifi.then().catch(err => {
+      console.error(".catch Error", err);
+    });
   };
 
   const getCurrentState = () => Object.assign({}, obj);
