@@ -286,6 +286,16 @@ function NetSet() {
             : ip.fromLong(ip.toLong(obj.eth0.server.subnet.networkAddress) + 2 + obj.eth0.server.dhcpPoolSize);
 
     if (!obj.wlan0.server.apInfo) obj.wlan0.server.apInfo = {};
+    if (!obj.wlan0.server.apInfo.bradcast)
+      obj.wlan0.server.apInfo.bradcast =
+        netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.bradcast
+          ? netConfig.wlan0.server.apInfo.bradcast
+          : true;
+    if (!obj.wlan0.server.apInfo.channel)
+      obj.wlan0.server.apInfo.channel =
+        netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.channel
+          ? netConfig.wlan0.server.apInfo.channel
+          : 6;
     if (!obj.wlan0.server.apInfo.pass)
       obj.wlan0.server.apInfo.pass =
         netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.pass
@@ -333,9 +343,7 @@ function NetSet() {
             : ip.fromLong(ip.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
 
     const setupWifi = setStates(states);
-    setupWifi.then().catch(err => {
-      console.error(".catch Error", err);
-    });
+    setupWifi.then().catch();
   };
 
   const getCurrentState = () => Object.assign({}, obj);
