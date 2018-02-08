@@ -57,36 +57,47 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 /**
  * calculated by ip, needs an ip address, and subnetMask
  * @typedef {Object} subnet
- * @property {string} subnet.networkAddress - network address for the subnet
- * @property {string} subnet.firstAddress - first useable ip address of the subnet
- * @property {string} subnet.lastAddress - last usable ip address of the subnet
- * @property {string} subnet.broadcastAddress - broadcast address for the subnet
- * @property {string} subnet.subnetMask - subnetmask for the subnet
- * @property {string} subnet.subnetMaskLength - cidr length for the subnet
- * @property {string} subnet.numHosts - how many hosts found in th subnet
- * @property {string} subnet.length - how many address are in the subnet, indluding network and broadcast
- * @property {function} subnet.contains - function to see if an Ip Address given falls inside the specified subnet
+ * @property {string} networkAddress - network address for the subnet
+ * @property {string} firstAddress - first useable ip address of the subnet
+ * @property {string} lastAddress - last usable ip address of the subnet
+ * @property {string} broadcastAddress - broadcast address for the subnet
+ * @property {string} subnetMask - subnetmask for the subnet
+ * @property {string} subnetMaskLength - cidr length for the subnet
+ * @property {string} numHosts - how many hosts found in th subnet
+ * @property {string} length - how many address are in the subnet, indluding network and broadcast
+ * @property {function} contains - function to see if an Ip Address given falls inside the specified subnet
+ */
+
+/**
+ * @typedef {Object} apInfo
+ * @property {boolean} bradcast - Whether to broadcast the SSID or not
+ * @property {number} channel - channel to broadcast out on
+ * @property {string} ssid - ssid to connect to for AP Mode
+ * @property {string} pass - password to authenticate access for AP Mode
  */
 
 /**
  * @typedef {Object} server
+ * @property {apInfo} [apInfo] - Object Containing broadcast, channel, ssid, and password for AP Mode
  * @property {string} address - Static IP Address to give interface when in DHCP Server Mode
  * @property {string} [subnetMask="255.255.255.0"] - Subnet mask to use when in DHCP Server Mode
  * @property {string} [dhcpLease="12h"] - How long the dhcp lease should be good for 1h = 1 hour, 1m = 1 minute, 30 = 30 seconds | defaults to 12h
  * @property {number} [dhcpPoolSize=10] - Size of the DHCP Pool to lease from
- * @property {subnet} subnet - Calculated based on address and subnetMask
- * @property {string} dhcpFirst - Calculated based on Subnet size and dhcpPoolSize
- * @property {string} dhcpLast - Calculated based on Subnet size and dhcpPoolSize
+ * @property {subnet} [subnet] - Calculated based on address and subnetMask
+ * @property {string} [dhcpFirst] - Calculated based on Subnet size and dhcpPoolSize
+ * @property {string} [dhcpLast] - Calculated based on Subnet size and dhcpPoolSize
  */
 
 /**
  * eth0, wlan0, wlan1: will contain client/server object, or both for the interface in question
  * @typedef {Object} interface
- * @property {clients=} clients - Object with Client Properties for the Interface
- * @property {server=} server - Object with Server Properties for the Interface
+ * @property {clients} clients - Object with Client Properties for the Interface
+ * @property {server} server - Object with Server Properties for the Interface
  */
 
-var files = ["/etc/default/hostapd", "/etc/dhcpcd.conf", "/etc/dnsmasq.conf", "/etc/hostapd/hostapd.conf", "/etc/network/interfaces", "/etc/wpa_supplicant/wpa_supplicant.conf"];
+var filesToBackup = ["/etc/default/hostapd", "/etc/dhcpcd.conf", "/etc/dnsmasq.conf", "/etc/hostapd/hostapd.conf", "/etc/network/interfaces", "/etc/wpa_supplicant/wpa_supplicant.conf"];
+
+var allFiles = ["/etc/default/hostapd", "/etc/dhcpcd.conf", "/etc/dnsmasq.conf", "/etc/dnsmasqconfs/eth0.dnsmasq.conf", "/etc/dnsmasqconfs/static.dnsmasq.conf", "/etc/dnsmasqconfs/wlan0.dnsmasq.conf", "/etc/hostapd/hostapd.conf", "/etc/network/interfaces", "/etc/wpa_supplicant/wpa_supplicant.conf"];
 
 function NetSet() {
   var _this = this;
@@ -101,149 +112,79 @@ function NetSet() {
     return _ip2.default.subnet(ipAddress, subnet);
   };
 
-  var stopServices = function stopServices(callback) {
-    return new Promise(function (resolve, reject) {
-      var cbObj = {};
-      _child_process2.default.execFile("systemctl", ["stop", "hostapd"], function (hostErr, hostStdOut, hostStdErr) {
-        if (hostErr) return callback ? callback(hostErr) : reject(hostErr);
-        cbObj.hostapd = {
-          StdOut: hostStdOut,
-          StdErr: hostStdErr
-        };
-        _child_process2.default.execFile("systemctl", ["stop", "dnsmasq"], function (dnsErr, dnsStdOut, dnsStdErr) {
-          if (dnsErr) return callback ? callback(dnsErr) : reject(dnsErr);
-          cbObj.dnsmasq = {
-            StdOut: dnsStdOut,
-            StdErr: dnsStdErr
-          };
-          return callback ? callback(null, cbObj) : resolve(cbObj);
-        });
-      });
-    });
-  };
+  var stopServices = function () {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var execFile;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              execFile = (0, _util.promisify)(_child_process2.default.execFile);
+              return _context.abrupt("return", Promise.all([execFile("systemctl", ["stop", "hostapd"]), execFile("systemctl", ["stop", "dnsmasq"]), execFile("systemctl", ["stop", "wpa_supplicant"])]));
 
-  var startServices = function startServices(callback) {
-    return new Promise(function (resolve, reject) {
-      var cbObj = {};
-      _child_process2.default.execFile("systemctl", ["start", "hostapd"], function (hostErr, hostStdOut, hostStdErr) {
-        if (hostErr) return callback ? callback(hostErr) : reject(hostErr);
-        cbObj.hostapd = {
-          StdOut: hostStdOut,
-          StdErr: hostStdErr
-        };
-        _child_process2.default.execFile("systemctl", ["start", "dnsmasq"], function (dnsErr, dnsStdOut, dnsStdErr) {
-          if (dnsErr) return callback ? callback(dnsErr) : reject(dnsErr);
-          cbObj.dnsmasq = {
-            StdOut: dnsStdOut,
-            StdErr: dnsStdErr
-          };
-          return callback ? callback(null, cbObj) : resolve(cbObj);
-        });
-      });
-    });
-  };
+            case 2:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, _this);
+    }));
+
+    return function stopServices() {
+      return _ref.apply(this, arguments);
+    };
+  }();
+
+  var startServices = function () {
+    var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+      var execFile;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              execFile = (0, _util.promisify)(_child_process2.default.execFile);
+              return _context2.abrupt("return", Promise.all([execFile("systemctl", ["start", "hostapd"]), execFile("systemctl", ["start", "dnsmasq"]), execFile("systemctl", ["start", "wpa_supplicant"])]));
+
+            case 2:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2, _this);
+    }));
+
+    return function startServices() {
+      return _ref2.apply(this, arguments);
+    };
+  }();
 
   var setStates = function () {
-    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(states) {
-      var createEmptyBackupFile, makeBackup, createFileContent, FilesToBeModified, ensureBackups;
-      return regeneratorRuntime.wrap(function _callee4$(_context4) {
+    var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(states) {
+      var createEmptyBackupFile, makeBackup, createFileContent, FilesToBeModifiedObj, FilesToBeModified, ensureBackups;
+      return regeneratorRuntime.wrap(function _callee6$(_context6) {
         while (1) {
-          switch (_context4.prev = _context4.next) {
+          switch (_context6.prev = _context6.next) {
             case 0:
               // console.log(states);
               console.dir(obj, { depth: null });
 
               createEmptyBackupFile = function () {
-                var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(file) {
+                var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(file) {
                   var writeFile;
-                  return regeneratorRuntime.wrap(function _callee$(_context) {
-                    while (1) {
-                      switch (_context.prev = _context.next) {
-                        case 0:
-                          writeFile = (0, _util.promisify)(_fs2.default.writeFile);
-                          // if error writing to file for any reason it will throw an error
-
-                          _context.next = 3;
-                          return writeFile(file + ".bak", Buffer.alloc(0));
-
-                        case 3:
-                          return _context.abrupt("return", true);
-
-                        case 4:
-                        case "end":
-                          return _context.stop();
-                      }
-                    }
-                  }, _callee, _this);
-                }));
-
-                return function createEmptyBackupFile(_x2) {
-                  return _ref2.apply(this, arguments);
-                };
-              }();
-
-              makeBackup = function () {
-                var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(file) {
-                  var copyFile;
-                  return regeneratorRuntime.wrap(function _callee2$(_context2) {
-                    while (1) {
-                      switch (_context2.prev = _context2.next) {
-                        case 0:
-                          if (!_fs2.default.existsSync(file + ".bak")) {
-                            _context2.next = 2;
-                            break;
-                          }
-
-                          return _context2.abrupt("return", true);
-
-                        case 2:
-                          _context2.prev = 2;
-                          copyFile = (0, _util.promisify)(_fs2.default.copyFile);
-                          // if backup file doens't exist copy file to file.bak
-
-                          _context2.next = 6;
-                          return copyFile(file, file + ".bak");
-
-                        case 6:
-                          return _context2.abrupt("return", true);
-
-                        case 9:
-                          _context2.prev = 9;
-                          _context2.t0 = _context2["catch"](2);
-
-                          if (!(_context2.t0.code === "ENOENT")) {
-                            _context2.next = 13;
-                            break;
-                          }
-
-                          return _context2.abrupt("return", createEmptyBackupFile(file));
-
-                        case 13:
-                          return _context2.abrupt("return", _context2.t0);
-
-                        case 14:
-                        case "end":
-                          return _context2.stop();
-                      }
-                    }
-                  }, _callee2, _this, [[2, 9]]);
-                }));
-
-                return function makeBackup(_x3) {
-                  return _ref3.apply(this, arguments);
-                };
-              }();
-
-              createFileContent = function () {
-                var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(state) {
                   return regeneratorRuntime.wrap(function _callee3$(_context3) {
                     while (1) {
                       switch (_context3.prev = _context3.next) {
                         case 0:
-                          console.log(state);
-                          return _context3.abrupt("return", state);
+                          writeFile = (0, _util.promisify)(_fs2.default.writeFile);
+                          // if error writing to file for any reason it will throw an error
 
-                        case 2:
+                          _context3.next = 3;
+                          return writeFile(file + ".bak", Buffer.alloc(0));
+
+                        case 3:
+                          return _context3.abrupt("return", true);
+
+                        case 4:
                         case "end":
                           return _context3.stop();
                       }
@@ -251,48 +192,191 @@ function NetSet() {
                   }, _callee3, _this);
                 }));
 
-                return function createFileContent(_x4) {
+                return function createEmptyBackupFile(_x2) {
                   return _ref4.apply(this, arguments);
                 };
               }();
 
-              _context4.prev = 4;
-              _context4.next = 7;
-              return Promise.all(states.map(createFileContent));
+              makeBackup = function () {
+                var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(file) {
+                  var copyFile;
+                  return regeneratorRuntime.wrap(function _callee4$(_context4) {
+                    while (1) {
+                      switch (_context4.prev = _context4.next) {
+                        case 0:
+                          if (!_fs2.default.existsSync(file + ".bak")) {
+                            _context4.next = 2;
+                            break;
+                          }
+
+                          return _context4.abrupt("return", true);
+
+                        case 2:
+                          _context4.prev = 2;
+                          copyFile = (0, _util.promisify)(_fs2.default.copyFile);
+                          // if backup file doens't exist copy file to file.bak
+
+                          _context4.next = 6;
+                          return copyFile(file, file + ".bak");
+
+                        case 6:
+                          return _context4.abrupt("return", true);
+
+                        case 9:
+                          _context4.prev = 9;
+                          _context4.t0 = _context4["catch"](2);
+
+                          if (!(_context4.t0.code === "ENOENT")) {
+                            _context4.next = 13;
+                            break;
+                          }
+
+                          return _context4.abrupt("return", createEmptyBackupFile(file));
+
+                        case 13:
+                          return _context4.abrupt("return", _context4.t0);
+
+                        case 14:
+                        case "end":
+                          return _context4.stop();
+                      }
+                    }
+                  }, _callee4, _this, [[2, 9]]);
+                }));
+
+                return function makeBackup(_x3) {
+                  return _ref5.apply(this, arguments);
+                };
+              }();
+
+              createFileContent = function () {
+                var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(stateObj) {
+                  var fileObj, availableIfaces;
+                  return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                    while (1) {
+                      switch (_context5.prev = _context5.next) {
+                        case 0:
+                          fileObj = {};
+                          availableIfaces = Object.keys(stateObj);
+
+
+                          fileObj["/etc/dnsmasq.conf"] = ["bind-interfaces", "bogus-priv", "server=8.8.8.8", "server=8.8.4.4", "listen-address=127.0.0.1", "clear-on-reload", "conf-dir=/etc/dnsmasqconfs/", ""];
+                          fileObj["/etc/dnsmasqconfs/static.dnsmasq.conf"] = [];
+                          obj.static.forEach(function (device) {
+                            fileObj["/etc/dnsmasqconfs/static.dnsmasq.conf"].push("dhcp-host=" + device.mac + "," + device.ipAddress + "," + device.name + ",infinite");
+                          });
+
+                          fileObj["/etc/dhcpcd.conf"] = ["hostname", "clientid", "persistent", "option rapid_commit", "option domain_name_servers, domain_name, domain_search, host_name", "option classless_static_routes", "option ntp_servers", "option interface_mtu", "require dhcp_server_identifier", "slaac private", ""];
+
+                          fileObj["/etc/default/hostapd"] = ["DAEMON_CONF=\"\"", "DAEMON_OPTS=\"\"", ""];
+
+                          fileObj["/etc/network/interfaces"] = ["source-directory /etc/network/interfaces.d", "", "auto lo", "iface lo inet loopback", ""];
+
+                          availableIfaces.forEach(function (iface) {
+                            switch (true) {
+                              case stateObj[iface].toLowerCase() === "server":
+                                fileObj["/etc/dnsmasqconfs/" + iface + ".dnsmasq.conf"] = ["interface=" + iface, "listen-address=" + obj[iface].server.subnet.firstAddress, "dhcp-range=" + iface + "," + obj[iface].server.dhcpFirst + "," + obj[iface].server.dhcpLast + "," + obj[iface].server.subnetMask + "," + obj[iface].server.subnet.broadcastAddress + "," + obj[iface].server.dhcpLease, ""];
+
+                                fileObj["/etc/network/interfaces"].push("" + (iface === "eth0" || iface === "wlan0" ? "auto " + iface : "allow-hotplug " + iface));
+                                fileObj["/etc/network/interfaces"].push("iface " + iface + " inet static");
+                                fileObj["/etc/network/interfaces"].push("    address " + obj[iface].server.subnet.firstAddress);
+                                fileObj["/etc/network/interfaces"].push("    gateway " + obj[iface].server.subnet.firstAddress);
+                                fileObj["/etc/network/interfaces"].push("    network " + obj[iface].server.subnet.networkAddress);
+                                fileObj["/etc/network/interfaces"].push("    netmask " + obj[iface].server.subnet.subnetMask);
+                                fileObj["/etc/network/interfaces"].push("    broadcast " + obj[iface].server.subnet.broadcastAddress);
+                                fileObj["/etc/network/interfaces"].push("");
+
+                                if (obj[iface].server.apInfo) {
+                                  fileObj["/etc/dhcpcd.conf"].push("denyinterfaces " + iface);
+                                  fileObj["/etc/dhcpcd.conf"].push("");
+
+                                  fileObj["/etc/default/hostapd"] = ["DAEMON_CONF=\"/etc/hostapd/hostapd.conf\"", "DAEMON_OPTS=\"\"", ""];
+
+                                  fileObj["/etc/hostapd/hostapd.conf"] = ["interface=" + iface, "driver=nl80211", "ssid=" + obj[iface].server.apInfo.ssid, "hw_mode=g", "channel=" + obj[iface].server.apInfo.channel, "ieee80211n=1", "wmm_enabled=0", "macaddr_acl=0", "auth_algs=1", "ignore_broadcast_ssid=" + (obj[iface].server.apInfo.bradcast ? 0 : 1), "wpa=2", "wpa_key_mgmt=WPA-PSK", "wpa_passphrase=" + obj[iface].server.apInfo.pass, "rsn_pairwise=CCMP", ""];
+                                }
+                                break;
+                              case stateObj[iface].toLowerCase() === "client":
+                              case stateObj[iface].toLowerCase() === "clients":
+                                stateObj[iface] = "clients";
+                                fileObj["/etc/dnsmasqconfs/" + iface + ".dnsmasq.conf"] = [];
+
+                                fileObj["/etc/network/interfaces"].push("" + (iface === "eth0" || iface === "wlan0" ? "auto " + iface : "allow-hotplug " + iface));
+                                fileObj["/etc/network/interfaces"].push("iface " + iface + " inet dhcp");
+                                fileObj["/etc/network/interfaces"].push("");
+
+                                if (iface === "wlan0") {
+                                  fileObj["/etc/wpa_supplicant/wpa_supplicant.conf"] = ["country=US", "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev", "update_config=1", ""];
+                                  obj[iface].clients.forEach(function (client) {
+                                    fileObj["/etc/wpa_supplicant/wpa_supplicant.conf"].push("network={");
+                                    fileObj["/etc/wpa_supplicant/wpa_supplicant.conf"].push("    scan_ssid=1");
+                                    fileObj["/etc/wpa_supplicant/wpa_supplicant.conf"].push("    ssid=\"" + client.ssid + "\"");
+                                    fileObj["/etc/wpa_supplicant/wpa_supplicant.conf"].push("    psk=\"" + client.pass + "\"");
+                                    fileObj["/etc/wpa_supplicant/wpa_supplicant.conf"].push("    id_str=\"" + client.name + "\"");
+                                    fileObj["/etc/wpa_supplicant/wpa_supplicant.conf"].push("}");
+                                    fileObj["/etc/wpa_supplicant/wpa_supplicant.conf"].push("");
+                                  });
+                                } else {
+                                  fileObj["/etc/wpa_supplicant/wpa_supplicant.conf"] = ["country=US", "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev", "update_config=1", ""];
+                                }
+                                break;
+                              default:
+                                break;
+                            }
+                          });
+                          return _context5.abrupt("return", fileObj);
+
+                        case 10:
+                        case "end":
+                          return _context5.stop();
+                      }
+                    }
+                  }, _callee5, _this);
+                }));
+
+                return function createFileContent(_x4) {
+                  return _ref6.apply(this, arguments);
+                };
+              }();
+
+              _context6.prev = 4;
+              _context6.next = 7;
+              return createFileContent(states);
 
             case 7:
-              FilesToBeModified = _context4.sent;
+              FilesToBeModifiedObj = _context6.sent;
+              FilesToBeModified = Object.keys(FilesToBeModifiedObj).sort();
 
+              console.log(FilesToBeModifiedObj);
               console.log(FilesToBeModified);
 
               // ensure that there is a backup of all files that could be modified
-              _context4.next = 11;
-              return Promise.all(files.map(makeBackup));
+              _context6.next = 13;
+              return Promise.all(filesToBackup.map(makeBackup));
 
-            case 11:
-              ensureBackups = _context4.sent;
+            case 13:
+              ensureBackups = _context6.sent;
 
               console.log(ensureBackups);
 
-              return _context4.abrupt("return", Object.assign({}, obj));
+              return _context6.abrupt("return", Object.assign({}, obj));
 
-            case 16:
-              _context4.prev = 16;
-              _context4.t0 = _context4["catch"](4);
+            case 18:
+              _context6.prev = 18;
+              _context6.t0 = _context6["catch"](4);
 
-              console.error("catch Error:", _context4.t0);
-              return _context4.abrupt("return", _context4.t0);
+              console.error("catch Error:", _context6.t0);
+              return _context6.abrupt("return", _context6.t0);
 
-            case 20:
+            case 22:
             case "end":
-              return _context4.stop();
+              return _context6.stop();
           }
         }
-      }, _callee4, _this, [[4, 16]]);
+      }, _callee6, _this, [[4, 18]]);
     }));
 
     return function setStates(_x) {
-      return _ref.apply(this, arguments);
+      return _ref3.apply(this, arguments);
     };
   }();
 
@@ -372,6 +456,8 @@ function NetSet() {
     if (!obj.eth0.server.dhcpLast) obj.eth0.server.dhcpLast = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpLast ? netConfig.eth0.server.dhcpLast : obj.eth0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10 + obj.eth0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10 + obj.eth0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 2 + obj.eth0.server.dhcpPoolSize);
 
     if (!obj.wlan0.server.apInfo) obj.wlan0.server.apInfo = {};
+    if (!obj.wlan0.server.apInfo.bradcast) obj.wlan0.server.apInfo.bradcast = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.bradcast ? netConfig.wlan0.server.apInfo.bradcast : true;
+    if (!obj.wlan0.server.apInfo.channel) obj.wlan0.server.apInfo.channel = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.channel ? netConfig.wlan0.server.apInfo.channel : 6;
     if (!obj.wlan0.server.apInfo.pass) obj.wlan0.server.apInfo.pass = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.pass ? netConfig.wlan0.server.apInfo.pass : "Pa$$w0rd";
     if (!obj.wlan0.server.apInfo.ssid) obj.wlan0.server.apInfo.ssid = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.ssid ? netConfig.wlan0.server.apInfo.ssid : "VL" + _os2.default.hostname().toUpperCase();
 
@@ -387,9 +473,7 @@ function NetSet() {
     if (!obj.wlan0.server.dhcpLast) obj.wlan0.server.dhcpLast = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpLast ? netConfig.wlan0.server.dhcpLast : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
 
     var setupWifi = setStates(states);
-    setupWifi.then().catch(function (err) {
-      console.error(".catch Error", err);
-    });
+    setupWifi.then().catch();
   };
 
   var getCurrentState = function getCurrentState() {
