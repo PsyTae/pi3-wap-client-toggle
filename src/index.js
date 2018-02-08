@@ -79,10 +79,22 @@ import { promisify } from "util";
  * @property {server} server - Object with Server Properties for the Interface
  */
 
-const files = [
+const filesToBackup = [
   "/etc/default/hostapd",
   "/etc/dhcpcd.conf",
   "/etc/dnsmasq.conf",
+  "/etc/hostapd/hostapd.conf",
+  "/etc/network/interfaces",
+  "/etc/wpa_supplicant/wpa_supplicant.conf"
+];
+
+const allFiles = [
+  "/etc/default/hostapd",
+  "/etc/dhcpcd.conf",
+  "/etc/dnsmasq.conf",
+  "/etc/dnsmasqconfs/eth0.dnsmasq.conf",
+  "/etc/dnsmasqconfs/static.dnsmasq.conf",
+  "/etc/dnsmasqconfs/wlan0.dnsmasq.conf",
   "/etc/hostapd/hostapd.conf",
   "/etc/network/interfaces",
   "/etc/wpa_supplicant/wpa_supplicant.conf"
@@ -157,7 +169,7 @@ function NetSet() {
       console.log(FilesToBeModified);
 
       // ensure that there is a backup of all files that could be modified
-      const ensureBackups = await Promise.all(files.map(makeBackup));
+      const ensureBackups = await Promise.all(filesToBackup.map(makeBackup));
       console.log(ensureBackups);
 
       return Object.assign({}, obj);
