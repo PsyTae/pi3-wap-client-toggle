@@ -99,45 +99,23 @@ function NetSet() {
 
   const getIfaceSubNet = (ipAddress, subnet) => ip.subnet(ipAddress, subnet);
 
-  const stopServices = callback =>
-    new Promise((resolve, reject) => {
-      const cbObj = {};
-      child.execFile("systemctl", ["stop", "hostapd"], (hostErr, hostStdOut, hostStdErr) => {
-        if (hostErr) return callback ? callback(hostErr) : reject(hostErr);
-        cbObj.hostapd = {
-          StdOut: hostStdOut,
-          StdErr: hostStdErr
+  const stopServices = async () => {
+    const execFile = promisify(child.execFile);
+    return Promise.all([
+      execFile("systemctl", ["stop", "hostapd"]),
+      execFile("systemctl", ["stop", "dnsmasq"]),
+      execFile("systemctl", ["stop", "wpa_supplicant"])
+    ]);
         };
-        child.execFile("systemctl", ["stop", "dnsmasq"], (dnsErr, dnsStdOut, dnsStdErr) => {
-          if (dnsErr) return callback ? callback(dnsErr) : reject(dnsErr);
-          cbObj.dnsmasq = {
-            StdOut: dnsStdOut,
-            StdErr: dnsStdErr
-          };
-          return callback ? callback(null, cbObj) : resolve(cbObj);
-        });
-      });
-    });
 
-  const startServices = callback =>
-    new Promise((resolve, reject) => {
-      const cbObj = {};
-      child.execFile("systemctl", ["start", "hostapd"], (hostErr, hostStdOut, hostStdErr) => {
-        if (hostErr) return callback ? callback(hostErr) : reject(hostErr);
-        cbObj.hostapd = {
-          StdOut: hostStdOut,
-          StdErr: hostStdErr
-        };
-        child.execFile("systemctl", ["start", "dnsmasq"], (dnsErr, dnsStdOut, dnsStdErr) => {
-          if (dnsErr) return callback ? callback(dnsErr) : reject(dnsErr);
-          cbObj.dnsmasq = {
-            StdOut: dnsStdOut,
-            StdErr: dnsStdErr
+  const startServices = async () => {
+    const execFile = promisify(child.execFile);
+    return Promise.all([
+      execFile("systemctl", ["start", "hostapd"]),
+      execFile("systemctl", ["start", "dnsmasq"]),
+      execFile("systemctl", ["start", "wpa_supplicant"])
+    ]);
           };
-          return callback ? callback(null, cbObj) : resolve(cbObj);
-        });
-      });
-    });
 
   const setStates = async states => {
     // console.log(states);
