@@ -118,7 +118,7 @@ function NetSet() {
       execFile("systemctl", ["stop", "dnsmasq"]),
       execFile("systemctl", ["stop", "wpa_supplicant"])
     ]);
-        };
+  };
 
   const startServices = async () => {
     const execFile = promisify(child.execFile);
@@ -127,7 +127,7 @@ function NetSet() {
       execFile("systemctl", ["start", "dnsmasq"]),
       execFile("systemctl", ["start", "wpa_supplicant"])
     ]);
-          };
+  };
 
   const setStates = async states => {
     // console.log(states);
@@ -159,13 +159,134 @@ function NetSet() {
       }
     };
 
-    const createFileContent = async state => {
-      console.log(state);
-      return state;
+    const createFileContent = async stateObj => {
+      const fileObj = {};
+      const availableIfaces = Object.keys(stateObj);
+
+      fileObj["/etc/dnsmasq.conf"] = [
+        `bind-interfaces`,
+        `bogus-priv`,
+        `server=8.8.8.8`,
+        `server=8.8.4.4`,
+        `listen-address=127.0.0.1`,
+        `clear-on-reload`,
+        `conf-dir=/etc/dnsmasqconfs/`,
+        ``
+      ];
+      fileObj["/etc/dnsmasqconfs/static.dnsmasq.conf"] = [];
+      obj.static.forEach(device => {
+        fileObj["/etc/dnsmasqconfs/static.dnsmasq.conf"].push(`dhcp-host=${device.mac},${device.ipAddress},${device.name},infinite`);
+      });
+
+      fileObj[`/etc/dhcpcd.conf`] = [
+        `hostname`,
+        `clientid`,
+        `persistent`,
+        `option rapid_commit`,
+        `option domain_name_servers, domain_name, domain_search, host_name`,
+        `option classless_static_routes`,
+        `option ntp_servers`,
+        `option interface_mtu`,
+        `require dhcp_server_identifier`,
+        `slaac private`,
+        ``
+      ];
+
+      fileObj[`/etc/default/hostapd`] = [`DAEMON_CONF=""`, `DAEMON_OPTS=""`, ``];
+
+      fileObj[`/etc/network/interfaces`] = [`source-directory /etc/network/interfaces.d`, ``, `auto lo`, `iface lo inet loopback`, ``];
+
+      availableIfaces.forEach(iface => {
+        switch (true) {
+          case stateObj[iface].toLowerCase() === "server":
+            fileObj[`/etc/dnsmasqconfs/${iface}.dnsmasq.conf`] = [
+              `interface=${iface}`,
+              `listen-address=${obj[iface].server.subnet.firstAddress}`,
+              `dhcp-range=${iface},${obj[iface].server.dhcpFirst},${obj[iface].server.dhcpLast},${obj[iface].server.subnetMask},${
+                obj[iface].server.subnet.broadcastAddress
+              },${obj[iface].server.dhcpLease}`,
+              ``
+            ];
+
+            fileObj[`/etc/network/interfaces`].push(`${iface === "eth0" || iface === "wlan0" ? `auto ${iface}` : `allow-hotplug ${iface}`}`);
+            fileObj[`/etc/network/interfaces`].push(`iface ${iface} inet static`);
+            fileObj[`/etc/network/interfaces`].push(`    address ${obj[iface].server.subnet.firstAddress}`);
+            fileObj[`/etc/network/interfaces`].push(`    gateway ${obj[iface].server.subnet.firstAddress}`);
+            fileObj[`/etc/network/interfaces`].push(`    network ${obj[iface].server.subnet.networkAddress}`);
+            fileObj[`/etc/network/interfaces`].push(`    netmask ${obj[iface].server.subnet.subnetMask}`);
+            fileObj[`/etc/network/interfaces`].push(`    broadcast ${obj[iface].server.subnet.broadcastAddress}`);
+            fileObj[`/etc/network/interfaces`].push(``);
+
+            if (obj[iface].server.apInfo) {
+              fileObj[`/etc/dhcpcd.conf`].push(`denyinterfaces ${iface}`);
+              fileObj[`/etc/dhcpcd.conf`].push(``);
+
+              fileObj[`/etc/default/hostapd`] = [`DAEMON_CONF="/etc/hostapd/hostapd.conf"`, `DAEMON_OPTS=""`, ``];
+
+              fileObj[`/etc/hostapd/hostapd.conf`] = [
+                `interface=${iface}`,
+                `driver=nl80211`,
+                `ssid=${obj[iface].server.apInfo.ssid}`,
+                `hw_mode=g`,
+                `channel=${obj[iface].server.apInfo.channel}`,
+                `ieee80211n=1`,
+                `wmm_enabled=0`,
+                `macaddr_acl=0`,
+                `auth_algs=1`,
+                `ignore_broadcast_ssid=${obj[iface].server.apInfo.bradcast ? 0 : 1}`,
+                `wpa=2`,
+                `wpa_key_mgmt=WPA-PSK`,
+                `wpa_passphrase=${obj[iface].server.apInfo.pass}`,
+                `rsn_pairwise=CCMP`,
+                ``
+              ];
+            }
+            break;
+          case stateObj[iface].toLowerCase() === "client":
+          case stateObj[iface].toLowerCase() === "clients":
+            stateObj[iface] = "clients";
+            fileObj[`/etc/dnsmasqconfs/${iface}.dnsmasq.conf`] = [];
+
+            fileObj[`/etc/network/interfaces`].push(`${iface === "eth0" || iface === "wlan0" ? `auto ${iface}` : `allow-hotplug ${iface}`}`);
+            fileObj[`/etc/network/interfaces`].push(`iface ${iface} inet dhcp`);
+            fileObj[`/etc/network/interfaces`].push(``);
+
+            if (iface === "wlan0") {
+              fileObj[`/etc/wpa_supplicant/wpa_supplicant.conf`] = [
+                `country=US`,
+                `ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev`,
+                `update_config=1`,
+                ``
+              ];
+              obj[iface].clients.forEach(client => {
+                fileObj[`/etc/wpa_supplicant/wpa_supplicant.conf`].push(`network={`);
+                fileObj[`/etc/wpa_supplicant/wpa_supplicant.conf`].push(`    scan_ssid=1`);
+                fileObj[`/etc/wpa_supplicant/wpa_supplicant.conf`].push(`    ssid="${client.ssid}"`);
+                fileObj[`/etc/wpa_supplicant/wpa_supplicant.conf`].push(`    psk="${client.pass}"`);
+                fileObj[`/etc/wpa_supplicant/wpa_supplicant.conf`].push(`    id_str="${client.name}"`);
+                fileObj[`/etc/wpa_supplicant/wpa_supplicant.conf`].push(`}`);
+                fileObj[`/etc/wpa_supplicant/wpa_supplicant.conf`].push(``);
+              });
+            } else {
+              fileObj[`/etc/wpa_supplicant/wpa_supplicant.conf`] = [
+                `country=US`,
+                `ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev`,
+                `update_config=1`,
+                ``
+              ];
+            }
+            break;
+          default:
+            break;
+        }
+      });
+      return fileObj;
     };
 
     try {
-      const FilesToBeModified = await Promise.all(states.map(createFileContent));
+      const FilesToBeModifiedObj = await createFileContent(states);
+      const FilesToBeModified = Object.keys(FilesToBeModifiedObj).sort();
+      console.log(FilesToBeModifiedObj);
       console.log(FilesToBeModified);
 
       // ensure that there is a backup of all files that could be modified
