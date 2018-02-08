@@ -7,6 +7,27 @@ import ip from "ip";
 import os from "os";
 import { promisify } from "util";
 
+Array.prototype.diff = function(a) {
+  return this.filter(i => a.indexOf(i) < 0);
+};
+
+Array.prototype.inArray = function(comparer) {
+  for (let i = 0; i < this.length; i += 1) {
+    if (comparer(this[i])) return true;
+  }
+  return false;
+};
+
+Array.prototype.pushIfNotExist = function(element, comparer) {
+  if (!this.inArray(comparer)) this.push(element);
+};
+/*
+// a demo of how to use pushIfNotExist
+const array = [{ name: "tom", text: "tasty" }];
+const element = { name: "tom", text: "tasty" };
+array.pushIfNotExist(element, (e) => e.name === element.name && e.text === element.text);
+ */
+
 /**
  * Object to initialize our available network interfaces with
  * @typedef {Object} obj
@@ -199,6 +220,7 @@ function NetSet() {
       availableIfaces.forEach(iface => {
         switch (true) {
           case stateObj[iface].toLowerCase() === "server":
+            allFiles.pushIfNotExist(`/etc/dnsmasqconfs/${iface}.dnsmasq.conf`, e => e === `/etc/dnsmasqconfs/${iface}.dnsmasq.conf`);
             fileObj[`/etc/dnsmasqconfs/${iface}.dnsmasq.conf`] = [
               `interface=${iface}`,
               `listen-address=${obj[iface].server.subnet.firstAddress}`,
@@ -245,6 +267,7 @@ function NetSet() {
           case stateObj[iface].toLowerCase() === "client":
           case stateObj[iface].toLowerCase() === "clients":
             stateObj[iface] = "clients";
+            allFiles.pushIfNotExist(`/etc/dnsmasqconfs/${iface}.dnsmasq.conf`, e => e === `/etc/dnsmasqconfs/${iface}.dnsmasq.conf`);
             fileObj[`/etc/dnsmasqconfs/${iface}.dnsmasq.conf`] = [];
 
             fileObj[`/etc/network/interfaces`].push(`${iface === "eth0" || iface === "wlan0" ? `auto ${iface}` : `allow-hotplug ${iface}`}`);
@@ -477,9 +500,5 @@ function NetSet() {
 
   return publicAPI;
 }
-
-Array.prototype.diff = function(a) {
-  return this.filter(i => a.indexOf(i) < 0);
-};
 
 module.exports = NetSet;

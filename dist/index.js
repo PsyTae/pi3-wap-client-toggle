@@ -23,6 +23,29 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; } // npm i -D babel-cli babel-preset-env
 /* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0, no-nested-ternary: 0, no-extend-native: 0 */
 
+Array.prototype.diff = function (a) {
+  return this.filter(function (i) {
+    return a.indexOf(i) < 0;
+  });
+};
+
+Array.prototype.inArray = function (comparer) {
+  for (var i = 0; i < this.length; i += 1) {
+    if (comparer(this[i])) return true;
+  }
+  return false;
+};
+
+Array.prototype.pushIfNotExist = function (element, comparer) {
+  if (!this.inArray(comparer)) this.push(element);
+};
+/*
+// a demo of how to use pushIfNotExist
+const array = [{ name: "tom", text: "tasty" }];
+const element = { name: "tom", text: "tasty" };
+array.pushIfNotExist(element, (e) => e.name === element.name && e.text === element.text);
+ */
+
 /**
  * Object to initialize our available network interfaces with
  * @typedef {Object} obj
@@ -275,6 +298,9 @@ function NetSet() {
                           availableIfaces.forEach(function (iface) {
                             switch (true) {
                               case stateObj[iface].toLowerCase() === "server":
+                                allFiles.pushIfNotExist("/etc/dnsmasqconfs/" + iface + ".dnsmasq.conf", function (e) {
+                                  return e === "/etc/dnsmasqconfs/" + iface + ".dnsmasq.conf";
+                                });
                                 fileObj["/etc/dnsmasqconfs/" + iface + ".dnsmasq.conf"] = ["interface=" + iface, "listen-address=" + obj[iface].server.subnet.firstAddress, "dhcp-range=" + iface + "," + obj[iface].server.dhcpFirst + "," + obj[iface].server.dhcpLast + "," + obj[iface].server.subnetMask + "," + obj[iface].server.subnet.broadcastAddress + "," + obj[iface].server.dhcpLease, ""];
 
                                 fileObj["/etc/network/interfaces"].push("" + (iface === "eth0" || iface === "wlan0" ? "auto " + iface : "allow-hotplug " + iface));
@@ -298,6 +324,9 @@ function NetSet() {
                               case stateObj[iface].toLowerCase() === "client":
                               case stateObj[iface].toLowerCase() === "clients":
                                 stateObj[iface] = "clients";
+                                allFiles.pushIfNotExist("/etc/dnsmasqconfs/" + iface + ".dnsmasq.conf", function (e) {
+                                  return e === "/etc/dnsmasqconfs/" + iface + ".dnsmasq.conf";
+                                });
                                 fileObj["/etc/dnsmasqconfs/" + iface + ".dnsmasq.conf"] = [];
 
                                 fileObj["/etc/network/interfaces"].push("" + (iface === "eth0" || iface === "wlan0" ? "auto " + iface : "allow-hotplug " + iface));
@@ -488,11 +517,5 @@ function NetSet() {
 
   return publicAPI;
 }
-
-Array.prototype.diff = function (a) {
-  return this.filter(function (i) {
-    return a.indexOf(i) < 0;
-  });
-};
 
 module.exports = NetSet;
