@@ -1,11 +1,11 @@
 // npm i -D babel-cli babel-preset-env
 /* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0, no-nested-ternary: 0, no-extend-native: 0 */
 
-import child from "child_process";
-import fs from "fs";
-import ip from "ip";
-import os from "os";
-import { promisify } from "util";
+const child = require("child_process");
+const fs = require("fs");
+const ip = require("ip");
+const os = require("os");
+const promisify = require("util").promisify;
 
 Array.prototype.diff = function(a) {
   return this.filter(i => a.indexOf(i) < 0);
@@ -132,27 +132,43 @@ function NetSet() {
 
   const getIfaceSubNet = (ipAddress, subnet) => ip.subnet(ipAddress, subnet);
 
-  const stopServices = async () => {
-    const execFile = promisify(child.execFile);
-    return Promise.all([
-      execFile("systemctl", ["stop", "hostapd"]),
-      execFile("systemctl", ["stop", "dnsmasq"]),
-      execFile("systemctl", ["stop", "wpa_supplicant"])
-    ]);
-  };
-
-  const startServices = async () => {
-    const execFile = promisify(child.execFile);
-    return Promise.all([
-      execFile("systemctl", ["start", "hostapd"]),
-      execFile("systemctl", ["start", "dnsmasq"]),
-      execFile("systemctl", ["start", "wpa_supplicant"])
-    ]);
-  };
-
   const setStates = async states => {
     // console.log(states);
-    console.dir(obj, { depth: null });
+    // console.dir(obj, { depth: null });
+
+    const stopServices = async () => {
+      const execFile = promisify(child.execFile);
+      return Promise.all([
+        execFile("systemctl", ["stop", "networking"]),
+        execFile("systemctl", ["stop", "hostapd"]),
+        execFile("systemctl", ["stop", "dnsmasq"]),
+        execFile("systemctl", ["stop", "wpa_supplicant"])
+      ]);
+    };
+
+    const startServices = async () => {
+      const execFile = promisify(child.execFile);
+      const servicesToStart = [execFile("systemctl", ["start", "dnsmasq"]), execFile("systemctl", ["start", "networking"])];
+      switch (true) {
+        case states.wlan0.toLowerCase() === "server":
+          servicesToStart.push(execFile("systemctl", ["start", "hostapd"]));
+          break;
+        case states.wlan0.toLowerCase() === "client":
+        case states.wlan0.toLowerCase() === "clients":
+          servicesToStart.push(execFile("systemctl", ["start", "wpa_supplicant"]));
+          break;
+        default:
+          break;
+      }
+      try {
+        await Promise.all(servicesToStart);
+        return true;
+      } catch (err) {
+        if (err.cmd === "systemctl start networking" && err.code === 1) return true;
+        // if (err.cmd === "systemctl start wpa_supplicant") return true;
+        return err;
+      }
+    };
 
     const createEmptyBackupFile = async file => {
       const writeFile = promisify(fs.writeFile);
@@ -306,15 +322,55 @@ function NetSet() {
       return fileObj;
     };
 
+    const deleteFile = async filePath => {
+      const unlink = promisify(fs.unlink);
+      try {
+        await unlink(filePath);
+        return true;
+      } catch (err) {
+        if (err.code === "ENOENT") return true;
+        return err;
+      }
+    };
+
+    const writeToFile = async fileObj => {
+      const appendFile = promisify(fs.appendFile);
+      for (let i = 0; i < fileObj.content.length; i += 1) {
+        const writeRow = fileObj.content[i] + os.EOL;
+        await appendFile(fileObj.file, writeRow, "utf8");
+      }
+      return `${fileObj.file} written to disk.`;
+    };
+
     try {
-      const FilesToBeModifiedObj = await createFileContent(states);
-      const FilesToBeModified = Object.keys(FilesToBeModifiedObj).sort();
-      console.log(FilesToBeModifiedObj);
-      console.log(FilesToBeModified);
+      const filesToBeModifiedObj = await createFileContent(states);
+      const filesToBeModified = [];
+      const filesToBeModifiedArray = Object.keys(filesToBeModifiedObj).sort();
+
+      filesToBeModifiedArray.forEach(file => {
+        const tempObj = {
+          file,
+          content: filesToBeModifiedObj[file]
+        };
+        filesToBeModified.push(tempObj);
+      });
 
       // ensure that there is a backup of all files that could be modified
-      const ensureBackups = await Promise.all(filesToBackup.map(makeBackup));
-      console.log(ensureBackups);
+      await Promise.all(filesToBackup.map(makeBackup));
+
+      // stop services
+      await stopServices();
+
+      // delete all files
+      await Promise.all(allFiles.map(deleteFile));
+
+      // write content to needed files
+      await Promise.all(filesToBeModified.map(writeToFile));
+
+      // start services
+      await startServices();
+
+      obj.actingAsHotSpot = states.wlan0.toLowerCase() === "server";
 
       return Object.assign({}, obj);
     } catch (err) {
@@ -324,20 +380,12 @@ function NetSet() {
   };
 
   // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
-  // todo: check files to see if services need to be stopped and files need to be reconfigured
-  // todo: backup files if originals are not already saved
+  // backup files if originals are not already saved
   // todo: stop services
-  // todo: setup files for hostapd, and dnsmasq
+  // todo: delete allfiles
+  // todo: write files needed for configuration
   // todo: start services
-  // todo: set obj.actingAsHotSpot = true
-
-  // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
-  // todo: check files to see if services need to be stopped and files need to be reconfigured
-  // todo: backup files if originals are not already saved
-  // todo: stop services
-  // todo: setup files to connect to wifi
-  // todo: start services
-  // todo: set obj.actingAsHotSpot = false
+  // todo: set obj.actingAsHotSpot = current config for wlan0
 
   /**
    * Initialize Network

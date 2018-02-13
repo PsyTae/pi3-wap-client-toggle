@@ -1,27 +1,15 @@
 "use strict";
 
-var _child_process = require("child_process");
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-var _child_process2 = _interopRequireDefault(_child_process);
-
-var _fs = require("fs");
-
-var _fs2 = _interopRequireDefault(_fs);
-
-var _ip = require("ip");
-
-var _ip2 = _interopRequireDefault(_ip);
-
-var _os = require("os");
-
-var _os2 = _interopRequireDefault(_os);
-
-var _util = require("util");
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; } // npm i -D babel-cli babel-preset-env
+// npm i -D babel-cli babel-preset-env
 /* eslint consistent-return: 0, no-param-reassign: 0, no-use-before-define: ["error", { "functions": false }], no-else-return: 0, no-nested-ternary: 0, no-extend-native: 0 */
+
+var child = require("child_process");
+var fs = require("fs");
+var ip = require("ip");
+var os = require("os");
+var promisify = require("util").promisify;
 
 Array.prototype.diff = function (a) {
   return this.filter(function (i) {
@@ -128,68 +116,104 @@ function NetSet() {
   var obj = {};
 
   var getIfaceMacAddress = function getIfaceMacAddress(iface) {
-    return _child_process2.default.execFileSync("cat", ["/sys/class/net/" + iface + "/address"]).toString().trim();
+    return child.execFileSync("cat", ["/sys/class/net/" + iface + "/address"]).toString().trim();
   };
 
   var getIfaceSubNet = function getIfaceSubNet(ipAddress, subnet) {
-    return _ip2.default.subnet(ipAddress, subnet);
+    return ip.subnet(ipAddress, subnet);
   };
 
-  var stopServices = function () {
-    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-      var execFile;
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              execFile = (0, _util.promisify)(_child_process2.default.execFile);
-              return _context.abrupt("return", Promise.all([execFile("systemctl", ["stop", "hostapd"]), execFile("systemctl", ["stop", "dnsmasq"]), execFile("systemctl", ["stop", "wpa_supplicant"])]));
-
-            case 2:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee, _this);
-    }));
-
-    return function stopServices() {
-      return _ref.apply(this, arguments);
-    };
-  }();
-
-  var startServices = function () {
-    var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-      var execFile;
-      return regeneratorRuntime.wrap(function _callee2$(_context2) {
-        while (1) {
-          switch (_context2.prev = _context2.next) {
-            case 0:
-              execFile = (0, _util.promisify)(_child_process2.default.execFile);
-              return _context2.abrupt("return", Promise.all([execFile("systemctl", ["start", "hostapd"]), execFile("systemctl", ["start", "dnsmasq"]), execFile("systemctl", ["start", "wpa_supplicant"])]));
-
-            case 2:
-            case "end":
-              return _context2.stop();
-          }
-        }
-      }, _callee2, _this);
-    }));
-
-    return function startServices() {
-      return _ref2.apply(this, arguments);
-    };
-  }();
-
   var setStates = function () {
-    var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(states) {
-      var createEmptyBackupFile, makeBackup, createFileContent, FilesToBeModifiedObj, FilesToBeModified, ensureBackups;
-      return regeneratorRuntime.wrap(function _callee6$(_context6) {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(states) {
+      var stopServices, startServices, createEmptyBackupFile, makeBackup, createFileContent, deleteFile, writeToFile, filesToBeModifiedObj, filesToBeModified, filesToBeModifiedArray;
+      return regeneratorRuntime.wrap(function _callee8$(_context8) {
         while (1) {
-          switch (_context6.prev = _context6.next) {
+          switch (_context8.prev = _context8.next) {
             case 0:
               // console.log(states);
-              console.dir(obj, { depth: null });
+              // console.dir(obj, { depth: null });
+
+              stopServices = function () {
+                var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+                  var execFile;
+                  return regeneratorRuntime.wrap(function _callee$(_context) {
+                    while (1) {
+                      switch (_context.prev = _context.next) {
+                        case 0:
+                          execFile = promisify(child.execFile);
+                          return _context.abrupt("return", Promise.all([execFile("systemctl", ["stop", "networking"]), execFile("systemctl", ["stop", "hostapd"]), execFile("systemctl", ["stop", "dnsmasq"]), execFile("systemctl", ["stop", "wpa_supplicant"])]));
+
+                        case 2:
+                        case "end":
+                          return _context.stop();
+                      }
+                    }
+                  }, _callee, _this);
+                }));
+
+                return function stopServices() {
+                  return _ref2.apply(this, arguments);
+                };
+              }();
+
+              startServices = function () {
+                var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+                  var execFile, servicesToStart;
+                  return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                    while (1) {
+                      switch (_context2.prev = _context2.next) {
+                        case 0:
+                          execFile = promisify(child.execFile);
+                          servicesToStart = [execFile("systemctl", ["start", "dnsmasq"]), execFile("systemctl", ["start", "networking"])];
+                          _context2.t0 = true;
+                          _context2.next = _context2.t0 === (states.wlan0.toLowerCase() === "server") ? 5 : _context2.t0 === (states.wlan0.toLowerCase() === "client") ? 7 : _context2.t0 === (states.wlan0.toLowerCase() === "clients") ? 7 : 9;
+                          break;
+
+                        case 5:
+                          servicesToStart.push(execFile("systemctl", ["start", "hostapd"]));
+                          return _context2.abrupt("break", 10);
+
+                        case 7:
+                          servicesToStart.push(execFile("systemctl", ["start", "wpa_supplicant"]));
+                          return _context2.abrupt("break", 10);
+
+                        case 9:
+                          return _context2.abrupt("break", 10);
+
+                        case 10:
+                          _context2.prev = 10;
+                          _context2.next = 13;
+                          return Promise.all(servicesToStart);
+
+                        case 13:
+                          return _context2.abrupt("return", true);
+
+                        case 16:
+                          _context2.prev = 16;
+                          _context2.t1 = _context2["catch"](10);
+
+                          if (!(_context2.t1.cmd === "systemctl start networking" && _context2.t1.code === 1)) {
+                            _context2.next = 20;
+                            break;
+                          }
+
+                          return _context2.abrupt("return", true);
+
+                        case 20:
+                          return _context2.abrupt("return", _context2.t1);
+
+                        case 21:
+                        case "end":
+                          return _context2.stop();
+                      }
+                    }
+                  }, _callee2, _this, [[10, 16]]);
+                }));
+
+                return function startServices() {
+                  return _ref3.apply(this, arguments);
+                };
+              }();
 
               createEmptyBackupFile = function () {
                 var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(file) {
@@ -198,7 +222,7 @@ function NetSet() {
                     while (1) {
                       switch (_context3.prev = _context3.next) {
                         case 0:
-                          writeFile = (0, _util.promisify)(_fs2.default.writeFile);
+                          writeFile = promisify(fs.writeFile);
                           // if error writing to file for any reason it will throw an error
 
                           _context3.next = 3;
@@ -227,7 +251,7 @@ function NetSet() {
                     while (1) {
                       switch (_context4.prev = _context4.next) {
                         case 0:
-                          if (!_fs2.default.existsSync(file + ".bak")) {
+                          if (!fs.existsSync(file + ".bak")) {
                             _context4.next = 2;
                             break;
                           }
@@ -236,7 +260,7 @@ function NetSet() {
 
                         case 2:
                           _context4.prev = 2;
-                          copyFile = (0, _util.promisify)(_fs2.default.copyFile);
+                          copyFile = promisify(fs.copyFile);
                           // if backup file doens't exist copy file to file.bak
 
                           _context4.next = 6;
@@ -367,63 +391,160 @@ function NetSet() {
                 };
               }();
 
-              _context6.prev = 4;
-              _context6.next = 7;
+              deleteFile = function () {
+                var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(filePath) {
+                  var unlink;
+                  return regeneratorRuntime.wrap(function _callee6$(_context6) {
+                    while (1) {
+                      switch (_context6.prev = _context6.next) {
+                        case 0:
+                          unlink = promisify(fs.unlink);
+                          _context6.prev = 1;
+                          _context6.next = 4;
+                          return unlink(filePath);
+
+                        case 4:
+                          return _context6.abrupt("return", true);
+
+                        case 7:
+                          _context6.prev = 7;
+                          _context6.t0 = _context6["catch"](1);
+
+                          if (!(_context6.t0.code === "ENOENT")) {
+                            _context6.next = 11;
+                            break;
+                          }
+
+                          return _context6.abrupt("return", true);
+
+                        case 11:
+                          return _context6.abrupt("return", _context6.t0);
+
+                        case 12:
+                        case "end":
+                          return _context6.stop();
+                      }
+                    }
+                  }, _callee6, _this, [[1, 7]]);
+                }));
+
+                return function deleteFile(_x5) {
+                  return _ref7.apply(this, arguments);
+                };
+              }();
+
+              writeToFile = function () {
+                var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(fileObj) {
+                  var appendFile, i, writeRow;
+                  return regeneratorRuntime.wrap(function _callee7$(_context7) {
+                    while (1) {
+                      switch (_context7.prev = _context7.next) {
+                        case 0:
+                          appendFile = promisify(fs.appendFile);
+                          i = 0;
+
+                        case 2:
+                          if (!(i < fileObj.content.length)) {
+                            _context7.next = 9;
+                            break;
+                          }
+
+                          writeRow = fileObj.content[i] + os.EOL;
+                          _context7.next = 6;
+                          return appendFile(fileObj.file, writeRow, "utf8");
+
+                        case 6:
+                          i += 1;
+                          _context7.next = 2;
+                          break;
+
+                        case 9:
+                          return _context7.abrupt("return", fileObj.file + " written to disk.");
+
+                        case 10:
+                        case "end":
+                          return _context7.stop();
+                      }
+                    }
+                  }, _callee7, _this);
+                }));
+
+                return function writeToFile(_x6) {
+                  return _ref8.apply(this, arguments);
+                };
+              }();
+
+              _context8.prev = 7;
+              _context8.next = 10;
               return createFileContent(states);
 
-            case 7:
-              FilesToBeModifiedObj = _context6.sent;
-              FilesToBeModified = Object.keys(FilesToBeModifiedObj).sort();
+            case 10:
+              filesToBeModifiedObj = _context8.sent;
+              filesToBeModified = [];
+              filesToBeModifiedArray = Object.keys(filesToBeModifiedObj).sort();
 
-              console.log(FilesToBeModifiedObj);
-              console.log(FilesToBeModified);
+
+              filesToBeModifiedArray.forEach(function (file) {
+                var tempObj = {
+                  file: file,
+                  content: filesToBeModifiedObj[file]
+                };
+                filesToBeModified.push(tempObj);
+              });
 
               // ensure that there is a backup of all files that could be modified
-              _context6.next = 13;
+              _context8.next = 16;
               return Promise.all(filesToBackup.map(makeBackup));
 
-            case 13:
-              ensureBackups = _context6.sent;
-
-              console.log(ensureBackups);
-
-              return _context6.abrupt("return", Object.assign({}, obj));
+            case 16:
+              _context8.next = 18;
+              return stopServices();
 
             case 18:
-              _context6.prev = 18;
-              _context6.t0 = _context6["catch"](4);
+              _context8.next = 20;
+              return Promise.all(allFiles.map(deleteFile));
 
-              console.error("catch Error:", _context6.t0);
-              return _context6.abrupt("return", _context6.t0);
+            case 20:
+              _context8.next = 22;
+              return Promise.all(filesToBeModified.map(writeToFile));
 
             case 22:
+              _context8.next = 24;
+              return startServices();
+
+            case 24:
+
+              obj.actingAsHotSpot = states.wlan0.toLowerCase() === "server";
+
+              return _context8.abrupt("return", Object.assign({}, obj));
+
+            case 28:
+              _context8.prev = 28;
+              _context8.t0 = _context8["catch"](7);
+
+              console.error("catch Error:", _context8.t0);
+              return _context8.abrupt("return", _context8.t0);
+
+            case 32:
             case "end":
-              return _context6.stop();
+              return _context8.stop();
           }
         }
-      }, _callee6, _this, [[4, 18]]);
+      }, _callee8, _this, [[7, 28]]);
     }));
 
     return function setStates(_x) {
-      return _ref3.apply(this, arguments);
+      return _ref.apply(this, arguments);
     };
   }();
 
   // if obj.actingAsHotSpot === false needs to be flipped to true by end of if to signify acting as hotspot
-  // todo: check files to see if services need to be stopped and files need to be reconfigured
-  // todo: backup files if originals are not already saved
+  // backup files if originals are not already saved
   // todo: stop services
-  // todo: setup files for hostapd, and dnsmasq
+  // todo: delete allfiles
+  // todo: write files needed for configuration
   // todo: start services
-  // todo: set obj.actingAsHotSpot = true
-
-  // if obj.actingAsHotSpot === true needs to be flipped to false by end of if to signify actingg as client
-  // todo: check files to see if services need to be stopped and files need to be reconfigured
-  // todo: backup files if originals are not already saved
-  // todo: stop services
-  // todo: setup files to connect to wifi
-  // todo: start services
-  // todo: set obj.actingAsHotSpot = false
+  // todo: set obj.actingAsHotSpot = current config for wlan0
 
   /**
    * Initialize Network
@@ -449,8 +570,8 @@ function NetSet() {
         obj[elem].server.dhcpPoolSize = netConfig[elem].server.dhcpPoolSize ? netConfig[elem].server.dhcpPoolSize : 10;
         obj[elem].server.subnetMask = netConfig[elem].server.subnetMask ? netConfig[elem].server.subnetMask : "255.255.255.0";
         obj[elem].server.subnet = netConfig[elem].server.subnet ? netConfig[elem].server.subnet : getIfaceSubNet(obj[elem].server.address, obj[elem].server.subnetMask);
-        obj[elem].server.dhcpFirst = netConfig[elem].server.dhcpFirst ? netConfig[elem].server.dhcpFirst : obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2);
-        obj[elem].server.dhcpLast = netConfig[elem].server.dhcpLast ? netConfig[elem].server.dhcpLast : obj[elem].server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
+        obj[elem].server.dhcpFirst = netConfig[elem].server.dhcpFirst ? netConfig[elem].server.dhcpFirst : obj[elem].server.subnet.contains(ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10)) ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10) : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2);
+        obj[elem].server.dhcpLast = netConfig[elem].server.dhcpLast ? netConfig[elem].server.dhcpLast : obj[elem].server.subnet.contains(ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize)) ? ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 10 + obj[elem].server.dhcpPoolSize) : ip.fromLong(ip.toLong(obj[elem].server.subnet.networkAddress) + 2 + obj[elem].server.dhcpPoolSize);
       }
       if (netConfig[elem].clients) {
         states[elem] = "clients";
@@ -481,14 +602,14 @@ function NetSet() {
     if (!obj.eth0.server.dhcpPoolSize) obj.eth0.server.dhcpPoolSize = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpPoolSize ? netConfig.eth0.server.dhcpPoolSize : 10;
     if (!obj.eth0.server.subnetMask) obj.eth0.server.subnetMask = netConfig && netConfig.eth0 && netConfig.eth0.server.subnetMask ? netConfig.eth0.server.subnetMask : "255.255.255.0";
     if (!obj.eth0.server.subnet) obj.eth0.server.subnet = netConfig && netConfig.eth0 && netConfig.eth0.server.subnet ? netConfig.eth0.server.subnet : getIfaceSubNet(obj.eth0.server.address, obj.eth0.server.subnetMask);
-    if (!obj.eth0.server.dhcpFirst) obj.eth0.server.dhcpFirst = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpFirst ? netConfig.eth0.server.dhcpFirst : obj.eth0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 2);
-    if (!obj.eth0.server.dhcpLast) obj.eth0.server.dhcpLast = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpLast ? netConfig.eth0.server.dhcpLast : obj.eth0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10 + obj.eth0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 10 + obj.eth0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.eth0.server.subnet.networkAddress) + 2 + obj.eth0.server.dhcpPoolSize);
+    if (!obj.eth0.server.dhcpFirst) obj.eth0.server.dhcpFirst = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpFirst ? netConfig.eth0.server.dhcpFirst : obj.eth0.server.subnet.contains(ip.fromLong(ip.toLong(obj.eth0.server.subnet.networkAddress) + 10)) ? ip.fromLong(ip.toLong(obj.eth0.server.subnet.networkAddress) + 10) : ip.fromLong(ip.toLong(obj.eth0.server.subnet.networkAddress) + 2);
+    if (!obj.eth0.server.dhcpLast) obj.eth0.server.dhcpLast = netConfig && netConfig.eth0 && netConfig.eth0.server.dhcpLast ? netConfig.eth0.server.dhcpLast : obj.eth0.server.subnet.contains(ip.fromLong(ip.toLong(obj.eth0.server.subnet.networkAddress) + 10 + obj.eth0.server.dhcpPoolSize)) ? ip.fromLong(ip.toLong(obj.eth0.server.subnet.networkAddress) + 10 + obj.eth0.server.dhcpPoolSize) : ip.fromLong(ip.toLong(obj.eth0.server.subnet.networkAddress) + 2 + obj.eth0.server.dhcpPoolSize);
 
     if (!obj.wlan0.server.apInfo) obj.wlan0.server.apInfo = {};
     if (!obj.wlan0.server.apInfo.bradcast) obj.wlan0.server.apInfo.bradcast = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.bradcast ? netConfig.wlan0.server.apInfo.bradcast : true;
     if (!obj.wlan0.server.apInfo.channel) obj.wlan0.server.apInfo.channel = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.channel ? netConfig.wlan0.server.apInfo.channel : 6;
     if (!obj.wlan0.server.apInfo.pass) obj.wlan0.server.apInfo.pass = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.pass ? netConfig.wlan0.server.apInfo.pass : "Pa$$w0rd";
-    if (!obj.wlan0.server.apInfo.ssid) obj.wlan0.server.apInfo.ssid = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.ssid ? netConfig.wlan0.server.apInfo.ssid : "VL" + _os2.default.hostname().toUpperCase();
+    if (!obj.wlan0.server.apInfo.ssid) obj.wlan0.server.apInfo.ssid = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.apInfo && netConfig.wlan0.server.apInfo.ssid ? netConfig.wlan0.server.apInfo.ssid : "VL" + os.hostname().toUpperCase();
 
     if (!obj.wlan0.server.address) obj.wlan0.server.address = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.address ? netConfig.wlan0.server.address : "10.10.10.1";
     if (!obj.wlan0.server.dhcpLease) obj.wlan0.server.dhcpLease = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpLease ? netConfig.wlan0.server.dhcpLease : "12h";
@@ -497,9 +618,9 @@ function NetSet() {
 
     if (!obj.wlan0.server.subnet) obj.wlan0.server.subnet = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.subnet ? netConfig.wlan0.server.subnet : getIfaceSubNet(obj.wlan0.server.address, obj.wlan0.server.subnetMask);
 
-    if (!obj.wlan0.server.dhcpFirst) obj.wlan0.server.dhcpFirst = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpFirst ? netConfig.wlan0.server.dhcpFirst : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2);
+    if (!obj.wlan0.server.dhcpFirst) obj.wlan0.server.dhcpFirst = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpFirst ? netConfig.wlan0.server.dhcpFirst : obj.wlan0.server.subnet.contains(ip.fromLong(ip.toLong(obj.wlan0.server.subnet.networkAddress) + 10)) ? ip.fromLong(ip.toLong(obj.wlan0.server.subnet.networkAddress) + 10) : ip.fromLong(ip.toLong(obj.wlan0.server.subnet.networkAddress) + 2);
 
-    if (!obj.wlan0.server.dhcpLast) obj.wlan0.server.dhcpLast = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpLast ? netConfig.wlan0.server.dhcpLast : obj.wlan0.server.subnet.contains(_ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize)) ? _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize) : _ip2.default.fromLong(_ip2.default.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
+    if (!obj.wlan0.server.dhcpLast) obj.wlan0.server.dhcpLast = netConfig && netConfig.wlan0 && netConfig.wlan0.server && netConfig.wlan0.server.dhcpLast ? netConfig.wlan0.server.dhcpLast : obj.wlan0.server.subnet.contains(ip.fromLong(ip.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize)) ? ip.fromLong(ip.toLong(obj.wlan0.server.subnet.networkAddress) + 10 + obj.wlan0.server.dhcpPoolSize) : ip.fromLong(ip.toLong(obj.wlan0.server.subnet.networkAddress) + 2 + obj.wlan0.server.dhcpPoolSize);
 
     var setupWifi = setStates(states);
     setupWifi.then().catch();
